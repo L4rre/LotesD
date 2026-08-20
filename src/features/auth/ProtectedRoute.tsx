@@ -16,3 +16,11 @@ export function RequireSeller({ children }: { children: ReactNode }) {
   if (status !== 'seller') return <Navigate to="/vendedor/login" replace />
   return children
 }
+
+// Para pantallas que ambos roles pueden ver (ej. /terrenos, spec §51/§52).
+export function RequireAnyRole({ children }: { children: ReactNode }) {
+  const { status } = useAuth()
+  if (status === 'loading') return <FullScreenLoader />
+  if (status === 'signed-out') return <Navigate to="/" replace />
+  return children
+}

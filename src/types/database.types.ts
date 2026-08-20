@@ -3,6 +3,13 @@
 // generar `supabase gen types`). Se amplía en cada fase con las tablas que
 // vaya necesitando la UI.
 
+export interface Project {
+  id: string
+  name: string
+  description: string | null
+  created_at: string
+}
+
 export interface Seller {
   seller_number: number
   display_name: string

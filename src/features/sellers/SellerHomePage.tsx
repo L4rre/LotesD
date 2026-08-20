@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { useAuth } from '../auth/useAuth'
 
@@ -13,6 +14,11 @@ export function SellerHomePage() {
           Vendedor {String(seller?.sellerNumber).padStart(2, '0')} — sesión activa.
           El mapa y las reservas llegan en fases posteriores.
         </p>
+        <Link to="/terrenos">
+          <Button variant="secondary" type="button">
+            Terrenos
+          </Button>
+        </Link>
         <Button variant="secondary" onClick={() => signOutSeller()}>
           Cerrar sesión
         </Button>

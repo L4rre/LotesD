@@ -10,16 +10,19 @@ decisiones de diseño en [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 ## Estado actual
 
-**Fase 4** (de 22) — sistema completo de vendedores: el selector de
-vendedores del login ahora se actualiza en vivo por Realtime (🟢/🔴 sin
-recargar), y el admin tiene un panel (`/admin/vendedores`) para
-bloquear/desbloquear el acceso global (con confirmación, ya que corta
-sesiones activas) y cambiar la contraseña global. Ver
+**Fase 5** (de 22) — multi-proyecto: pantalla `/terrenos` (accesible a
+admin y vendedor) que lista todos los terrenos con su cantidad de lotes; el
+administrador puede crear terrenos nuevos ahí mismo. Cada terreno tiene su
+propia ruta `/terrenos/:id` (placeholder por ahora — el mapa llega en la
+Fase 8, el dashboard por terreno en la Fase 17). La Fase 4 ya dejó el
+sistema de vendedores completo: selector en vivo por Realtime y panel de
+administrador en `/admin/vendedores` (bloqueo global con confirmación,
+cambio de contraseña global). Ver
 [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) §0.7 por una corrección de
-seguridad encontrada en el camino (se separó `seller_access_state` de
-`system_settings` para que Realtime no pudiera filtrar el hash de la
-contraseña). Falta todo el resto de la app (mapa, reservas, pagos,
-dashboard).
+seguridad encontrada en el camino de la Fase 4 (se separó
+`seller_access_state` de `system_settings` para que Realtime no pudiera
+filtrar el hash de la contraseña). Falta: el "Proyecto Demo" con sus 48
+lotes (Fases 6-7), el mapa (Fase 8) y todo lo demás.
 
 **Para probar el login real** necesitas un proyecto Supabase con las
 migraciones aplicadas — ver la sección [Base de datos](#base-de-datos-supabase)

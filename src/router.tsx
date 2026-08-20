@@ -2,10 +2,12 @@ import { createBrowserRouter } from 'react-router-dom'
 import { RoleSelectPage } from './features/auth/pages/RoleSelectPage'
 import { AdminLoginPage } from './features/auth/pages/AdminLoginPage'
 import { SellerLoginPage } from './features/auth/pages/SellerLoginPage'
-import { RequireAdmin, RequireSeller } from './features/auth/ProtectedRoute'
+import { RequireAdmin, RequireAnyRole, RequireSeller } from './features/auth/ProtectedRoute'
 import { AdminHomePage } from './features/dashboard/AdminHomePage'
 import { SellerHomePage } from './features/sellers/SellerHomePage'
 import { AdminSellersPage } from './features/sellers/pages/AdminSellersPage'
+import { ProjectsListPage } from './features/projects/pages/ProjectsListPage'
+import { ProjectDetailPage } from './features/projects/pages/ProjectDetailPage'
 
 export const router = createBrowserRouter([
   { path: '/', element: <RoleSelectPage /> },
@@ -33,6 +35,22 @@ export const router = createBrowserRouter([
       <RequireSeller>
         <SellerHomePage />
       </RequireSeller>
+    ),
+  },
+  {
+    path: '/terrenos',
+    element: (
+      <RequireAnyRole>
+        <ProjectsListPage />
+      </RequireAnyRole>
+    ),
+  },
+  {
+    path: '/terrenos/:projectId',
+    element: (
+      <RequireAnyRole>
+        <ProjectDetailPage />
+      </RequireAnyRole>
     ),
   },
 ])

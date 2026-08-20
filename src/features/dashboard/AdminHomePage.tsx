@@ -13,6 +13,11 @@ export function AdminHomePage() {
         <p className="screen__subtitle">
           Sesión de administrador activa. El dashboard llega en la Fase 16.
         </p>
+        <Link to="/terrenos">
+          <Button variant="secondary" type="button">
+            Terrenos
+          </Button>
+        </Link>
         <Link to="/admin/vendedores">
           <Button variant="secondary" type="button">
             Vendedores
