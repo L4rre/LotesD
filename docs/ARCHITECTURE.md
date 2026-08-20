@@ -80,6 +80,25 @@ una razón técnica mejor". Estos son los puntos donde eso aplica, y por qué:
    ~1,600 lotes / 8 terrenos. Se agrega `project_id` a `payments`, copiado
    por trigger desde la reserva al insertar.
 
+7. **`seller_access_state`, tabla separada de `system_settings` (encontrado
+   al implementar la Fase 4).** El plan original tenía
+   `seller_access_enabled` como columna de `system_settings`, la misma
+   tabla que guarda el hash de la contraseña global, expuesta al cliente
+   solo a través de la vista `system_settings_public` (sin la columna del
+   hash). Eso funciona para lecturas puntuales, pero se rompe con
+   Realtime: Supabase Realtime transmite la fila completa de la **tabla**
+   replicada (no de una vista) y solo filtra por RLS a nivel de fila, no
+   respeta los `GRANT`/`REVOKE` por columna. Si `system_settings` se
+   hubiera agregado a la publicación de Realtime para que el bloqueo se
+   viera en vivo, cualquier cliente suscrito habría recibido
+   `seller_global_password_hash` en cada evento, sin importar que el
+   SELECT directo lo bloqueara. Solución: mover `enabled` a una tabla
+   propia (`seller_access_state`) que nunca contiene nada sensible, con
+   RLS abierto (`using (true)`) a `anon` y `authenticated`, y esa es la
+   que se agrega a la publicación de Realtime. `system_settings` queda
+   solo con el hash y ya no necesita estar en Realtime ni tener política
+   de SELECT alguna.
+
 Ninguno de estos puntos es una contradicción bloqueante — son huecos de
 diseño que la spec deja abiertos y que hay que resolver antes de escribir
 SQL. Sigo con el resto del análisis asumiendo estas decisiones; si alguna no
@@ -250,10 +269,18 @@ payments (
 
 system_settings (
   id                          boolean primary key default true check (id),  -- fila única
-  seller_access_enabled       boolean not null default true,
   seller_global_password_hash text not null,          -- nunca seleccionable por el cliente
   updated_at                  timestamptz not null default now(),
   updated_by                  uuid
+)
+
+-- estado público sin secretos (ver §0.7): la única tabla de configuración
+-- que se agrega a la publicación de Realtime.
+seller_access_state (
+  id         boolean primary key default true check (id),
+  enabled    boolean not null default true,
+  updated_at timestamptz not null default now(),
+  updated_by uuid
 )
 
 audit_logs (
@@ -327,7 +354,7 @@ solo cambia el parámetro.
   1. El cliente asegura una sesión anónima (`signInAnonymously()`, una vez
      por navegador, persistida por supabase-js) apenas se abre la pantalla
      de login de vendedor, no recién al enviar el formulario — hace falta
-     para poder leer `sellers`/`seller_sessions`/`system_settings_public`
+     para poder leer `sellers`/`seller_sessions`/`seller_access_state`
      antes de que el vendedor escriba nada.
   2. El usuario elige número de vendedor, escribe su nombre y la
      contraseña global.
@@ -350,16 +377,15 @@ solo cambia el parámetro.
   `authenticated`) para pintar 🟢 disponible / 🔴 en uso en tiempo real
   (Realtime sobre esa tabla).
 - **Bloqueo global (§18):** antes de mostrar el formulario, el cliente lee
-  `system_settings.seller_access_enabled` a través de una vista pública sin
-  la columna de contraseña (`system_settings_public`), y se suscribe a sus
-  cambios por Realtime. Si está bloqueado, la pantalla muestra
-  "🔴 ACCESO DE VENDEDORES BLOQUEADO" y **no renderiza el campo de
+  `seller_access_state.enabled` (tabla propia sin ningún secreto, ver §0.7)
+  y se suscribe a sus cambios por Realtime. Si está bloqueado, la pantalla
+  muestra "🔴 ACCESO DE VENDEDORES BLOQUEADO" y **no renderiza el campo de
   contraseña ni el botón de ingresar** — no es solo que el submit lo
   rechace, el vendedor literalmente no puede escribir la contraseña
   mientras está bloqueado. Si el admin bloquea mientras alguien ya tiene la
   pantalla de login abierta, el campo desaparece al instante por la
   suscripción Realtime. Esto es una ayuda de UX; el candado real sigue
-  siendo la RPC `seller_login`, que revalida `seller_access_enabled` del
+  siendo la RPC `seller_login`, que revalida `seller_access_state` del
   lado del servidor pase lo que pase en el cliente.
 - Adicionalmente, al activar el bloqueo (`admin_toggle_seller_access(false)`)
   la función cierra también las sesiones ya activas (`seller_sessions.status

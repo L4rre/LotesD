@@ -25,7 +25,7 @@ export interface SellerSessionRow {
   created_at: string
 }
 
-export interface SystemSettingsPublic {
-  seller_access_enabled: boolean
+export interface SellerAccessState {
+  enabled: boolean
   updated_at: string
 }

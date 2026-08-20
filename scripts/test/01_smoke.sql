@@ -126,8 +126,8 @@ exception when others then
   raise notice 'OK: %', sqlerrm;
 end $$;
 
-\echo '--- test 14: system_settings_public SI es legible (para pintar bloqueado/habilitado) ---'
-select * from system_settings_public;
+\echo '--- test 14: seller_access_state SI es legible (para pintar bloqueado/habilitado) ---'
+select * from seller_access_state;
 
 \echo '--- test 15: admin bloquea acceso global -> Ana pierde su sesion activa ---'
 select set_config('request.jwt.claim.sub', '99999999-9999-9999-9999-999999999999', false);
@@ -149,5 +149,23 @@ select set_config('request.jwt.claim.sub', '99999999-9999-9999-9999-999999999999
 select admin_toggle_seller_access(true);
 select set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', false);
 select * from seller_login(2::smallint, 'Ana', 'vendedor2026');
+
+\echo '--- test 18: seller_access_state es legible incluso como anon (sin sesión todavía) ---'
+reset role;
+set role anon;
+select * from seller_access_state;
+select set_config('request.jwt.claim.sub', '', false);
+set role authenticated;
+
+\echo '--- test 19: system_settings (con el hash) sigue sin ser legible ni por anon ni por authenticated ---'
+set role anon;
+do $$
+begin
+  perform seller_global_password_hash from system_settings;
+  raise exception 'DEBERIA HABER FALLADO: anon pudo leer system_settings';
+exception when others then
+  raise notice 'OK: %', sqlerrm;
+end $$;
+set role authenticated;
 
 \echo '--- TODOS LOS TESTS PASARON ---'

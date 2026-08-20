@@ -10,14 +10,16 @@ decisiones de diseño en [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 ## Estado actual
 
-**Fase 3** (de 22) — autenticación: login de administrador (usuario/password
-interno) y de vendedor (número + nombre + contraseña global) conectados a
-las RPCs de la Fase 2, con sesión persistida, heartbeat automático y cierre
-de sesión por 1h de inactividad. Ver
-[`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) para el detalle de cada
-decisión. Falta: el selector de vendedores con disponibilidad en vivo y el
-panel de bloqueo global del admin (Fase 4), y todo el resto de la app
-(mapa, reservas, pagos, dashboard).
+**Fase 4** (de 22) — sistema completo de vendedores: el selector de
+vendedores del login ahora se actualiza en vivo por Realtime (🟢/🔴 sin
+recargar), y el admin tiene un panel (`/admin/vendedores`) para
+bloquear/desbloquear el acceso global (con confirmación, ya que corta
+sesiones activas) y cambiar la contraseña global. Ver
+[`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) §0.7 por una corrección de
+seguridad encontrada en el camino (se separó `seller_access_state` de
+`system_settings` para que Realtime no pudiera filtrar el hash de la
+contraseña). Falta todo el resto de la app (mapa, reservas, pagos,
+dashboard).
 
 **Para probar el login real** necesitas un proyecto Supabase con las
 migraciones aplicadas — ver la sección [Base de datos](#base-de-datos-supabase)

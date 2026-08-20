@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { useAuth } from '../auth/useAuth'
 
@@ -12,6 +13,11 @@ export function AdminHomePage() {
         <p className="screen__subtitle">
           Sesión de administrador activa. El dashboard llega en la Fase 16.
         </p>
+        <Link to="/admin/vendedores">
+          <Button variant="secondary" type="button">
+            Vendedores
+          </Button>
+        </Link>
         <Button variant="secondary" onClick={() => signOutAdmin()}>
           Cerrar sesión
         </Button>

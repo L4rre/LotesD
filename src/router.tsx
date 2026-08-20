@@ -5,6 +5,7 @@ import { SellerLoginPage } from './features/auth/pages/SellerLoginPage'
 import { RequireAdmin, RequireSeller } from './features/auth/ProtectedRoute'
 import { AdminHomePage } from './features/dashboard/AdminHomePage'
 import { SellerHomePage } from './features/sellers/SellerHomePage'
+import { AdminSellersPage } from './features/sellers/pages/AdminSellersPage'
 
 export const router = createBrowserRouter([
   { path: '/', element: <RoleSelectPage /> },
@@ -14,6 +15,14 @@ export const router = createBrowserRouter([
     element: (
       <RequireAdmin>
         <AdminHomePage />
+      </RequireAdmin>
+    ),
+  },
+  {
+    path: '/admin/vendedores',
+    element: (
+      <RequireAdmin>
+        <AdminSellersPage />
       </RequireAdmin>
     ),
   },
