@@ -44,16 +44,23 @@ una razón técnica mejor". Estos son los puntos donde eso aplica, y por qué:
    auth.uid() ahora mismo" del lado del servidor — así no hace falta
    confiar en que el cliente declare correctamente su propio `seller_number`.
 
-4. **No hay escritura directa a tablas comerciales desde el cliente.**
-   `reservations`, `payments`, `seller_sessions`, `clients` (cuando los crea
-   un vendedor) y `system_settings` **no** tienen políticas RLS de
-   INSERT/UPDATE para el rol `authenticated`. Todas las mutaciones pasan por
-   RPCs `SECURITY DEFINER` con las reglas de negocio embebidas (precio
-   inmutable, vendedor no puede fechar hacia atrás, exclusividad de lote,
-   exclusividad de sesión). Es más simple de auditar que un mosaico de
-   políticas RLS por columna, y es el único forma de garantizar la regla
-   crítica del §35 (dos vendedores no pueden reservar el mismo lote) sin
-   confiar en JavaScript.
+4. **Las tablas críticas para concurrencia y dinero no aceptan escritura
+   directa desde el cliente — solo RPC.** `reservations`, `payments`,
+   `seller_sessions` y `system_settings` **no** tienen políticas RLS de
+   INSERT/UPDATE/DELETE para ningún rol (ni admin ni vendedor). Toda
+   mutación pasa por funciones `SECURITY DEFINER` con las reglas de negocio
+   embebidas (precio inmutable, vendedor no puede fechar hacia atrás,
+   exclusividad de lote, exclusividad de sesión, sin sobrepago). Es la única
+   forma de garantizar la regla crítica del §35 (dos vendedores no pueden
+   reservar el mismo lote) sin confiar en JavaScript, y hace la auditoría
+   trivial porque cada mutación pasa por un único punto que ya escribe en
+   `audit_logs`.
+   `projects`, `lots`, `clients` y `sellers` (datos maestros/de referencia,
+   sin invariantes de concurrencia) sí tienen política RLS directa de
+   escritura para `profiles.role = 'admin'` — así el admin puede cargar 8
+   terrenos × 200 lotes por SQL/CSV sin pasar uno por uno por una RPC.
+   Los vendedores nunca escriben esas tablas directamente: cuando crean un
+   cliente lo hacen dentro de `create_reservation` (que sí es RPC).
 
 5. **`reservation_status` incluye `cancelled`, no hay DELETE real.**
    La spec no es explícita sobre qué pasa si una reserva se cancela (§38
@@ -87,7 +94,7 @@ USUARIO (navegador móvil o desktop)
    ▼
 REACT + TS (Vite SPA, servido estático desde GitHub Pages)
    │
-   ├── Auth (admin: email+password · vendedor: anon auth + RPC seller_login)
+   ├── Auth (admin: usuario/password interno · vendedor: anon auth + RPC seller_login)
    ├── Mapa (SVG conceptual, geometría desacoplada de datos)
    ├── Dashboard (general y por terreno, misma función parametrizada)
    ├── Lotes / Reservas / Pagos / Clientes / Vendedores / Auditoría
@@ -294,9 +301,26 @@ solo cambia el parámetro.
 
 ## 4. Flujo de autenticación
 
-- **Administrador:** cuenta real de Supabase Auth (email + password),
-  creada manualmente para la propietaria/administrador. `profiles.role =
-  'admin'`. Login estándar `supabase.auth.signInWithPassword`.
+- **Administrador:** cuenta **interna**, no un correo real — el admin ve un
+  login con usuario/contraseña (`admin` / `admin` en la demo). Por dentro
+  sigue siendo Supabase Auth (así se obtiene un `auth.uid()` real y RLS
+  funciona igual que para cualquier tabla): el frontend mapea el usuario
+  `admin` a un correo sintético fijo (`admin@lotesd.internal`) y llama
+  `supabase.auth.signInWithPassword({ email: 'admin@lotesd.internal',
+  password })` — el usuario nunca ve ese correo. `profiles.role = 'admin'`.
+  La contraseña `admin` es el valor semilla de la demo; el admin la cambia
+  luego con el flujo normal de cambio de contraseña de Supabase Auth (no
+  tiene relación con la contraseña global de vendedores del §17, son dos
+  cosas distintas).
+  - **Importante:** esta cuenta no puede crearse con una migración SQL
+    normal contra un proyecto Supabase hosteado (el service_role key nunca
+    debe usarse desde el frontend, y por eso tampoco se commitea un script
+    que lo use). Se crea una sola vez, a mano, desde el Dashboard de
+    Supabase (Authentication → Add user, con ese correo sintético) o con un
+    script local de configuración que el desarrollador corre una vez fuera
+    del repo. Para desarrollo local con `supabase start`, sí se puede
+    sembrar en `supabase/seed.sql` porque ahí la base corre en Docker con
+    control total.
 - **Vendedor:** no inicia sesión con email. Al elegir "Vendedor":
   1. El cliente asegura una sesión anónima (`signInAnonymously()`, una vez
      por navegador, persistida por supabase-js).
@@ -320,6 +344,24 @@ solo cambia el parámetro.
 - El selector de vendedores lee `seller_sessions` (SELECT abierto a
   `authenticated`) para pintar 🟢 disponible / 🔴 en uso en tiempo real
   (Realtime sobre esa tabla).
+- **Bloqueo global (§18):** antes de mostrar el formulario, el cliente lee
+  `system_settings.seller_access_enabled` a través de una vista pública sin
+  la columna de contraseña (`system_settings_public`), y se suscribe a sus
+  cambios por Realtime. Si está bloqueado, la pantalla muestra
+  "🔴 ACCESO DE VENDEDORES BLOQUEADO" y **no renderiza el campo de
+  contraseña ni el botón de ingresar** — no es solo que el submit lo
+  rechace, el vendedor literalmente no puede escribir la contraseña
+  mientras está bloqueado. Si el admin bloquea mientras alguien ya tiene la
+  pantalla de login abierta, el campo desaparece al instante por la
+  suscripción Realtime. Esto es una ayuda de UX; el candado real sigue
+  siendo la RPC `seller_login`, que revalida `seller_access_enabled` del
+  lado del servidor pase lo que pase en el cliente.
+- Adicionalmente, al activar el bloqueo (`admin_toggle_seller_access(false)`)
+  la función cierra también las sesiones ya activas (`seller_sessions.status
+  = 'closed'` para todas), no solo impide nuevos logins — "pierden acceso"
+  se interpreta como corte inmediato, útil como botón de pánico (ej. pausar
+  ventas por un cambio de precio). Ver §10 sobre por qué esto es
+  independiente del cierre por inactividad.
 - Heartbeat: `setInterval` cada ~45s llama a la RPC `seller_heartbeat(id)`
   mientras la pestaña está abierta.
 - Expiración: no depende de un cron en servidor (GitHub Pages no tiene
@@ -399,18 +441,46 @@ solo cambia el parámetro.
   §34) y que escale razonablemente a 8 terrenos × 200 lotes sin recalcular
   agregados globales en cada pago.
 
-## 10. Estrategia de seguridad
+## 10. Expiración por inactividad (1 hora)
+
+Distinto del heartbeat técnico del §5 (que detecta pestañas
+cerradas/crasheadas para liberar rápido el número de vendedor, ~3 min), esto
+es una política de seguridad: si **admin o vendedor** no interactúan con la
+app (sin click/tecla/touch/scroll) durante 60 minutos, la sesión se cierra
+sola, aunque la pestaña siga abierta y el heartbeat siga "vivo".
+
+- Un watchdog en el cliente (hook `useIdleLogout`, compartido por ambos
+  roles) guarda `lastActivityAt` en memoria, actualizado por listeners
+  pasivos de `pointerdown`/`keydown`/`touchstart`/`scroll`. Cada minuto
+  revisa si pasó 1h desde la última interacción.
+- Al cumplirse: vendedor → llama `seller_logout(session_id)` y vuelve al
+  selector; admin → `supabase.auth.signOut()` y vuelve al login. Ambos casos
+  escriben `audit_logs` con `action='session_expired_inactivity'`.
+- Es una defensa de cliente (no hay servidor propio que la fuerce), pero es
+  coherente con el resto del diseño: el heartbeat (§5) ya es la defensa de
+  servidor para el caso "el dispositivo desapareció"; este mecanismo cubre
+  el caso "el dispositivo sigue ahí pero el humano se fue", que es
+  exactamente lo que un heartbeat automático no puede detectar por sí solo.
+- El admin, al reingresar tras la sesión de Supabase Auth expirar por
+  refresh-token vencido (por defecto ~1 semana en Supabase), simplemente ve
+  la pantalla de login de nuevo — no requiere manejo especial adicional.
+
+## 11. Estrategia de seguridad
 
 - RLS habilitado en todas las tablas, deny-by-default.
 - SELECT: abierto a `authenticated` (admin + vendedores anónimos) en
   `projects`, `lots`, `clients`, `reservations`, `payments`,
   `seller_sessions`, `sellers`; `audit_logs` y la columna de hash de
   `system_settings` son solo para `role='admin'` (vía `profiles`).
-- INSERT/UPDATE/DELETE: **ninguna** tabla comercial tiene políticas RLS que
-  permitan escritura directa desde el cliente. Todo pasa por funciones
-  `SECURITY DEFINER` con las reglas de negocio adentro (§0.4) — incluye la
-  regla "el vendedor no puede modificar pagos ni fechas históricas" (spec
-  §31, §42): esas RPCs ni siquiera existen para el rol vendedor.
+- INSERT/UPDATE/DELETE: en `reservations`, `payments`, `seller_sessions` y
+  `system_settings` **no existe ninguna política RLS de escritura** para
+  ningún rol — todo pasa por funciones `SECURITY DEFINER` con las reglas de
+  negocio adentro (§0.4), incluida la regla "el vendedor no puede modificar
+  pagos ni fechas históricas" (spec §31, §42): esas RPCs directamente no
+  existen para el rol vendedor. `projects`, `lots`, `clients` y `sellers` sí
+  tienen política de escritura directa, pero exclusiva para
+  `profiles.role='admin'` (§0.4) — un vendedor autenticado nunca pasa esa
+  condición.
 - Invariantes críticos (un lote, una reserva activa; un número de vendedor,
   una sesión activa) se garantizan con índices únicos parciales en
   PostgreSQL, no con lógica de JavaScript (spec §35).
