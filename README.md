@@ -10,11 +10,20 @@ decisiones de diseño en [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 ## Estado actual
 
-**Fase 2** (de 22) — base de datos: esquema completo en
-`supabase/migrations/` (tablas, relaciones, RLS, funciones RPC) validado
-contra un Postgres real (ver [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
-para el detalle de cada decisión). Todavía no hay UI conectada a Supabase —
-eso empieza en la Fase 3 (autenticación).
+**Fase 3** (de 22) — autenticación: login de administrador (usuario/password
+interno) y de vendedor (número + nombre + contraseña global) conectados a
+las RPCs de la Fase 2, con sesión persistida, heartbeat automático y cierre
+de sesión por 1h de inactividad. Ver
+[`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) para el detalle de cada
+decisión. Falta: el selector de vendedores con disponibilidad en vivo y el
+panel de bloqueo global del admin (Fase 4), y todo el resto de la app
+(mapa, reservas, pagos, dashboard).
+
+**Para probar el login real** necesitas un proyecto Supabase con las
+migraciones aplicadas — ver la sección [Base de datos](#base-de-datos-supabase)
+más abajo. Sin `.env` configurado, la app carga igual pero cualquier
+intento de login muestra "No se pudo conectar" (falla de red esperada, no
+un error de código).
 
 ## Stack
 
@@ -77,12 +86,15 @@ mutación sensible (ver `docs/ARCHITECTURE.md` §0, §11).
 **Aplicar en un proyecto Supabase (hosted, plan Free):**
 
 1. Crea el proyecto en [supabase.com](https://supabase.com).
-2. En el SQL Editor del dashboard, corre cada archivo de
+2. En Authentication → Sign In / Providers, habilita **Anonymous sign-ins**
+   (apagado por defecto). El login de vendedor lo necesita — ver
+   `docs/ARCHITECTURE.md` §4.
+3. En el SQL Editor del dashboard, corre cada archivo de
    `supabase/migrations/` en orden (o usa `supabase db push` con el CLI si
    lo prefieres).
-3. Copia `.env.example` a `.env` y completa `VITE_SUPABASE_URL` /
+4. Copia `.env.example` a `.env` y completa `VITE_SUPABASE_URL` /
    `VITE_SUPABASE_ANON_KEY` (Project Settings → API).
-4. Crea la cuenta interna del administrador (no es un correo real, ver
+5. Crea la cuenta interna del administrador (no es un correo real, ver
    `docs/ARCHITECTURE.md` §4):
    ```bash
    SUPABASE_URL=https://tu-proyecto.supabase.co \

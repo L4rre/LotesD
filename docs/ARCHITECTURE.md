@@ -321,9 +321,14 @@ solo cambia el parámetro.
     del repo. Para desarrollo local con `supabase start`, sí se puede
     sembrar en `supabase/seed.sql` porque ahí la base corre en Docker con
     control total.
-- **Vendedor:** no inicia sesión con email. Al elegir "Vendedor":
+- **Vendedor:** no inicia sesión con email. Requiere que el proyecto
+  Supabase tenga **Anonymous sign-ins** habilitado (Authentication →
+  Providers; apagado por defecto). Al elegir "Vendedor":
   1. El cliente asegura una sesión anónima (`signInAnonymously()`, una vez
-     por navegador, persistida por supabase-js).
+     por navegador, persistida por supabase-js) apenas se abre la pantalla
+     de login de vendedor, no recién al enviar el formulario — hace falta
+     para poder leer `sellers`/`seller_sessions`/`system_settings_public`
+     antes de que el vendedor escriba nada.
   2. El usuario elige número de vendedor, escribe su nombre y la
      contraseña global.
   3. El cliente llama a la RPC `seller_login(seller_number, name,

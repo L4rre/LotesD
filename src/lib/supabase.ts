@@ -9,4 +9,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   )
 }
 
-export const supabase = createClient(supabaseUrl ?? '', supabaseAnonKey ?? '')
+// createClient() exige una URL válida incluso si nunca se usa: sin esto la
+// app entera no renderiza (pantalla en blanco) cuando falta el .env, en vez
+// de solo fallar las llamadas de red que sí lo necesitan.
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-anon-key',
+)
