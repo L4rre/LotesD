@@ -15,7 +15,7 @@ import {
   SELLER_SESSION_STORAGE_KEY,
   adminUsernameToEmail,
 } from '../../config/auth'
-import { AuthFlowError } from './authErrors'
+import { AuthFlowError } from '../../domain/rpcErrors'
 import type { SellerSessionRow } from '../../types/database.types'
 
 type AuthStatus = 'loading' | 'signed-out' | 'admin' | 'seller'

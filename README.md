@@ -10,18 +10,21 @@ decisiones de diseño en [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 ## Estado actual
 
-**Fases 8-9** (de 22) — mapa conceptual del terreno: carretera principal
-en cruz, 4 manzanas (Y/Z/K/L) de 12 lotes coloreados según su estado
-(🟢/🟡/🔴), brújula fija, pan/zoom táctil, y un Bottom Sheet al tocar un
-lote con su detalle (spec §13). `/terrenos/:id` ya muestra el mapa real
-del "Proyecto Demo" (Fases 6-7, 48 lotes sembrados). La Fase 5 dejó
-`/terrenos` (lista de terrenos, accesible a admin y vendedor) y la Fase 4
-el sistema de vendedores completo (selector en vivo, panel de admin en
-`/admin/vendedores`). Ver [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
-§0.7-§0.8 por dos correcciones encontradas en el camino (Realtime
-filtrando el hash de la contraseña; pgcrypto en el esquema `extensions`
-de Supabase). Falta: reservas/pagos (Fases 10-14), Realtime en el mapa
-(Fase 15) y todo lo demás.
+**Fases 10-13** (de 22) — reservas y pagos, directo desde el mapa: al
+tocar un lote disponible, el vendedor ve "Reservar este lote" (cliente,
+teléfono/DNI opcional, precio acordado, inicial); al tocar uno reservado,
+el administrador ve "Registrar pago" (monto + fecha). Cada botón solo
+aparece para el rol correspondiente (spec §41/§42) — el vendedor no
+registra pagos posteriores, el admin no crea reservas directamente. Sin
+Realtime todavía (Fase 15): el color se actualiza al refrescar tras la
+acción, no en otros dispositivos conectados. Las Fases 8-9 dejaron el mapa
+(carretera en cruz, 4 manzanas, brújula, pan/zoom, Bottom Sheet) y las
+Fases 6-7 el "Proyecto Demo" con sus 48 lotes. Ver
+[`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) §0.7-§0.8 por dos
+correcciones encontradas en fases anteriores (Realtime filtrando el hash
+de la contraseña; pgcrypto en el esquema `extensions` de Supabase). Falta:
+Realtime en el mapa (Fase 15), dashboards (Fases 16-18), auditoría (Fase
+19) y el resto.
 
 **Para probar el login real** necesitas un proyecto Supabase con las
 migraciones aplicadas — ver la sección [Base de datos](#base-de-datos-supabase)

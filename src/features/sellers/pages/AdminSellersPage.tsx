@@ -7,7 +7,7 @@ import { Alert } from '../../../components/ui/Alert'
 import { FullScreenLoader } from '../../../components/ui/FullScreenLoader'
 import { useSellerAccessEnabled } from '../hooks/useSellerAccessEnabled'
 import { useSellerAvailability } from '../hooks/useSellerAvailability'
-import { translateAuthError } from '../../auth/authErrors'
+import { translateAuthError } from '../../../domain/rpcErrors'
 
 function timeSince(iso: string): string {
   const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60_000))

@@ -1,7 +1,51 @@
+import { useState } from 'react'
 import { LOT_STATUS_META, formatCurrency, formatDate } from '../../../domain/lotStatus'
+import { Button } from '../../../components/ui/Button'
+import { Alert } from '../../../components/ui/Alert'
+import { useAuth } from '../../auth/useAuth'
+import { CreateReservationForm } from '../../reservations/components/CreateReservationForm'
+import { RegisterPaymentForm } from '../../payments/components/RegisterPaymentForm'
 import type { LotStatusRow } from '../../../types/database.types'
 
-export function LotDetailSheet({ lot }: { lot: LotStatusRow }) {
+interface LotDetailSheetProps {
+  lot: LotStatusRow
+  onActionSuccess: () => void
+}
+
+type Mode = 'view' | 'reserve' | 'payment'
+
+export function LotDetailSheet({ lot, onActionSuccess }: LotDetailSheetProps) {
+  const { status: authStatus } = useAuth()
+  const [mode, setMode] = useState<Mode>('view')
+  const [justDone, setJustDone] = useState<string | null>(null)
+
+  function handleActionSuccess(message: string) {
+    setMode('view')
+    setJustDone(message)
+    onActionSuccess()
+  }
+
+  if (mode === 'reserve') {
+    return (
+      <CreateReservationForm
+        lotId={lot.lot_id}
+        onSuccess={() => handleActionSuccess('Reserva registrada.')}
+        onCancel={() => setMode('view')}
+      />
+    )
+  }
+
+  if (mode === 'payment' && lot.active_reservation_id) {
+    return (
+      <RegisterPaymentForm
+        reservationId={lot.active_reservation_id}
+        balance={lot.balance ?? 0}
+        onSuccess={() => handleActionSuccess('Pago registrado.')}
+        onCancel={() => setMode('view')}
+      />
+    )
+  }
+
   const meta = LOT_STATUS_META[lot.status]
 
   return (
@@ -10,6 +54,8 @@ export function LotDetailSheet({ lot }: { lot: LotStatusRow }) {
       <p className="lot-sheet__status">
         {meta.emoji} {meta.label.toUpperCase()}
       </p>
+
+      {justDone && <Alert variant="success">{justDone}</Alert>}
 
       <div className="lot-sheet__rows">
         <div className="lot-sheet__row">
@@ -55,6 +101,14 @@ export function LotDetailSheet({ lot }: { lot: LotStatusRow }) {
           </>
         )}
       </div>
+
+      {lot.status === 'available' && authStatus === 'seller' && (
+        <Button onClick={() => setMode('reserve')}>Reservar este lote</Button>
+      )}
+
+      {lot.status === 'reserved' && authStatus === 'admin' && (
+        <Button onClick={() => setMode('payment')}>Registrar pago</Button>
+      )}
     </>
   )
 }

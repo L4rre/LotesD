@@ -23,8 +23,19 @@ const QUADRANTS: Record<string, { originX: number; originY: number; labelX: numb
   L: { originX: 565, originY: 565, labelX: 760, labelY: 550 },
 }
 
-export function DemoMap({ lots }: { lots: LotStatusRow[] }) {
-  const [selectedLot, setSelectedLot] = useState<LotStatusRow | null>(null)
+interface DemoMapProps {
+  lots: LotStatusRow[]
+  onRefresh: () => void
+}
+
+export function DemoMap({ lots, onRefresh }: DemoMapProps) {
+  const [selectedLotId, setSelectedLotId] = useState<string | null>(null)
+
+  // Derivado en cada render en vez de guardar el objeto en estado: sin
+  // Realtime todavía (eso es la Fase 15), cuando `lots` se refresca a mano
+  // tras una acción, el Bottom Sheet automáticamente muestra la fila
+  // actualizada del mismo lote en vez de quedarse con los datos viejos.
+  const selectedLot = selectedLotId ? (lots.find((l) => l.lot_id === selectedLotId) ?? null) : null
 
   const byBlock = useMemo(() => {
     const map = new Map<string, Map<number, LotStatusRow>>()
@@ -94,7 +105,7 @@ export function DemoMap({ lots }: { lots: LotStatusRow[] }) {
                   cellH={CELL_H}
                   gap={GAP}
                   lotsByNumber={byBlock.get(block) ?? new Map()}
-                  onSelect={setSelectedLot}
+                  onSelect={(lot) => setSelectedLotId(lot.lot_id)}
                 />
               </g>
             ))}
@@ -102,8 +113,8 @@ export function DemoMap({ lots }: { lots: LotStatusRow[] }) {
         </TransformComponent>
       </TransformWrapper>
 
-      <BottomSheet open={selectedLot !== null} onClose={() => setSelectedLot(null)}>
-        {selectedLot && <LotDetailSheet lot={selectedLot} />}
+      <BottomSheet open={selectedLot !== null} onClose={() => setSelectedLotId(null)}>
+        {selectedLot && <LotDetailSheet lot={selectedLot} onActionSuccess={onRefresh} />}
       </BottomSheet>
     </div>
   )

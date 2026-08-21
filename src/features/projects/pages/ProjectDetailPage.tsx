@@ -15,7 +15,7 @@ export function ProjectDetailPage() {
   const [loadingProject, setLoadingProject] = useState(true)
   const [projectError, setProjectError] = useState<string | null>(null)
 
-  const { lots, loading: loadingLots, error: lotsError } = useLotStatuses(projectId)
+  const { lots, loading: loadingLots, error: lotsError, refresh: refreshLots } = useLotStatuses(projectId)
 
   useEffect(() => {
     let cancelled = false
@@ -69,7 +69,7 @@ export function ProjectDetailPage() {
           <Alert variant="info">Este terreno todavía no tiene lotes cargados.</Alert>
         </div>
       ) : (
-        <DemoMap lots={lots} />
+        <DemoMap lots={lots} onRefresh={refreshLots} />
       )}
     </div>
   )
