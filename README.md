@@ -10,18 +10,30 @@ decisiones de diseño en [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 ## Estado actual
 
-**Fase 16-18** (de 22), más una ronda de ajustes pedidos tras probar todo
-en vivo — **la página de inicio (`/`) ahora es pública**: cualquier
-visitante ve el mapa del terreno (disponibilidad + dimensiones de cada
-lote al hacer clic) sin iniciar sesión, con dos botones "Administrador" /
-"Vendedor" que abren el login como ventana modal sobre el mismo mapa; una
-vez logeado, el encabezado cambia según el rol y aparece "Cerrar sesión"
-(ver `docs/ARCHITECTURE.md` §4, §13). Cada lote muestra frente/fondo/
-laterales por separado (no un simple ancho×alto, para lotes irregulares)
-y ya no tiene precio de referencia — solo el admin puede editar su
-dimensión. Los formularios de reserva y pago guardan un borrador en el
-navegador mientras se escriben, para no perder lo ya escrito si se cierra
-la app a medias. El admin tiene un **dashboard general** (`/admin`) y un
+**Fase 16-18** (de 22), más dos rondas de ajustes pedidos tras probar todo
+en vivo. La más reciente: **el terreno real reemplazó al Proyecto Demo**
+— 5 manzanas (X-10, Y-10, Y-11, Z-10, Z-11), 78 lotes, con área y
+perímetro transcritos de la tabla maestra del propietario (ver
+`docs/ARCHITECTURE.md` §14). Cada lote muestra área/perímetro y una
+imagen individual con sus cotas en vez de los lados como texto — para que
+la imagen de un lote aparezca automáticamente, solo hay que dejarla en
+`public/lot-details/<manzana-sin-guion>-<lote>.png` (ej.
+`public/lot-details/X10-05.png`); si todavía no existe, la ficha avisa
+"Imagen de dimensiones no disponible" sin romperse. El mapa (calles,
+parque, las 5 manzanas) se genera desde datos, no es un dibujo fijo —
+agregar otro terreno más adelante es un archivo de layout nuevo en
+`src/features/map/terrainData/`, no un componente nuevo.
+
+Antes de eso: **la página de inicio (`/`) es pública** — cualquier
+visitante ve el mapa del terreno (disponibilidad + dimensiones al hacer
+clic) sin iniciar sesión, con dos botones "Administrador" / "Vendedor"
+que abren el login como ventana modal sobre el mismo mapa; una vez
+logeado, el encabezado cambia según el rol y aparece "Cerrar sesión" (ver
+`docs/ARCHITECTURE.md` §4, §13). Solo el admin puede editar el área/
+perímetro de un lote. Los formularios de reserva y pago guardan un
+borrador en el navegador mientras se escriben, para no perder lo ya
+escrito si se cierra la app a medias. El admin tiene un **dashboard
+general** (`/admin`) y un
 **dashboard por terreno** (`/terrenos/:id/dashboard`), ambos con conteos
 por estado, valor reservado/cobrado/saldo, tabla por vendedor y listas de
 recientes — comparten un mismo hook y componente (spec §25, ver

@@ -474,19 +474,31 @@ solo cambia el parámetro.
 
 ## 8. Estrategia del mapa
 
-- El mapa es un SVG conceptual (carretera en cruz, 4 manzanas, brújula fija
-  a la pantalla) armado en `src/features/map/` (`DemoMap.tsx` +
-  `components/BlockGrid.tsx`, que genera las 12 celdas de una manzana por
-  código en vez de tener 48 `<rect>` escritos a mano), con cada lote como
-  un elemento con `id="lot-{lot_code}"` — esto es exactamente
-  `lots.geometry_id`. Es específico del "Proyecto Demo" (4 manzanas de 12);
-  un terreno con otra distribución tendría su propio componente de mapa
-  hasta que exista un importador genérico (ver más abajo).
+- El mapa es un SVG conceptual (calles, parque, brújula fija a la
+  pantalla) generado en React a partir de datos, no un archivo `.svg`
+  estático: `src/features/map/TerrainMap.tsx` (antes `DemoMap.tsx`) recibe
+  un `layout` (posiciones de manzanas/calles/parque, ver
+  `terrainData/buenaFortuna.ts`) y una lista de lotes (`lot_status_view`),
+  y `components/BlockGrid.tsx` ubica cada lote de una manzana en una
+  grilla de 2 columnas **en el orden en que aparece en los datos**, no
+  asumiendo numeración correlativa -- varias manzanas reales tienen
+  huecos (Y-11 salta del 08 al 22 con números sueltos, Z-10/Z-11 solo
+  tienen 01-04 y 18-25). Cada lote es un elemento con
+  `id="lot-{lot_code}"` (`lots.geometry_id`).
+- Es una **aproximación topológica**, no un trazado exacto del plano real
+  (no hay archivo vectorial/DXF disponible): respeta la agrupación y el
+  orden relativo de las manzanas, pero cada lote se dibuja como una celda
+  rectangular, no con su forma real.
 - La geometría (SVG) y el dato comercial (estado, precio, cliente) están
   completamente separados (spec §43): `useLotStatuses` trae
-  `lot_status_view` por `project_id`, y `DemoMap` solo pinta/pone
-  `onClick` sobre los elementos del SVG según ese estado. Ningún dato
-  comercial vive dentro del SVG.
+  `lot_status_view` por `project_id`, y `TerrainMap`/`BlockGrid` solo
+  pintan/ponen `onClick` sobre las celdas según ese estado. Ningún dato
+  comercial vive en el layout.
+- **Terrenos futuros (docs §16):** un terreno nuevo es un archivo más en
+  `terrainData/` (su propio `layout`) más un lookup por `project.id` en
+  `ProjectDetailPage`/`HomePage` (hoy hardcodeado a
+  `BUENA_FORTUNA_LAYOUT` porque solo existe un terreno) -- no un
+  componente de mapa nuevo ni cambios en `TerrainMap`/`BlockGrid`.
 - Preparado para planos reales (spec §44): cuando la propietaria entregue
   planos digitales, basta con generar un SVG nuevo que reutilice los mismos
   `geometry_id` (o remapear `lots.geometry_id`) — no se toca el resto de la
@@ -639,3 +651,43 @@ sola, aunque la pestaña siga abierta y el heartbeat siga "vivo".
   ventana de carrera). El borrador se limpia (`clearFormDraft`) al
   confirmar el envío o al cancelar explícitamente.
 - **Idle timeout:** 1h → 3h (config §10), sin otro cambio de mecanismo.
+
+## 14. Terreno real "Buena Fortuna" (reemplazo del Proyecto Demo)
+
+- El "Proyecto Demo" (4 manzanas de 12 lotes) se reemplaza por el terreno
+  real: 5 manzanas (X-10, Y-10, Y-11, Z-10, Z-11), 78 lotes, transcritos
+  de la tabla maestra (Excel) verificada por el propietario --
+  `20260821150000_buena_fortuna_terrain.sql` borra los pagos/reservas/
+  lotes de la demo y siembra los reales sobre el mismo `project_id`
+  (identificado por nombre, no por un id fijo que no se conoce de
+  antemano).
+- **`front/back/left_side/right_side` (Fase 16-18) se reemplazan por
+  `perimeter`:** la fuente real trae área + perímetro por lote, no cada
+  lado por separado -- la idea de 4 lados independientes no aplicaba a
+  los datos reales disponibles. `agreed_price` de una reserva sigue
+  siendo un concepto aparte, no se toca.
+- **Imagen de cotas:** la ficha del lote ya no muestra los lados como
+  texto (spec: una imagen por lote con su forma y medidas). La ruta de
+  esa imagen (`dimensionImageUrl(lotCode)` en `domain/lotStatus.ts`,
+  `public/lot-details/<lot_code>.png`) **no se guarda en la base** -- se
+  deriva del `lot_code`, que ya es único, para no duplicar el mismo dato
+  en dos lugares (spec §15). `LotDimensionImage.tsx` maneja el caso
+  "todavía no existe el archivo" con un aviso, sin romper la ficha
+  (`<img onError>`).
+- **Área/perímetro sí siguen en `lots` de Supabase** (no en un archivo
+  estático aparte, aunque el pedido original los dibujaba como una fuente
+  separada): son la misma columna que ya existía desde la Fase 2, y
+  agregar `perimeter` es un cambio de esquema mínimo comparado con sacar
+  `area` de la base y construir un join cliente-servidor nuevo -- prioriza
+  la instrucción explícita de no tocar Supabase más de lo necesario. El
+  espíritu de la separación (mapa = geometría/identificación, Supabase =
+  estado comercial) igual se cumple: `LotDetailSheet` sigue mostrando
+  área/perímetro/imagen aparte de precio/cliente/pagos, ambos grupos
+  vienen de la misma consulta.
+- Nombres de imagen: se calculan como `{manzana sin guion}-{lote con 2
+  dígitos}` (ej. `X10-05.png`) en vez de usar literalmente la columna
+  "Imagen lote" del Excel, porque esa columna traía una numeración
+  distinta para los lotes 18-25 de Z-10 (imágenes 05-12, aparentemente
+  numeradas por orden de dibujo del CAD, no por número de lote) --
+  inconsistente con el resto del archivo y con el patrón que el propio
+  pedido describe.

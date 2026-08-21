@@ -6,6 +6,7 @@ import { useAuth } from '../../auth/useAuth'
 import { CreateReservationForm } from '../../reservations/components/CreateReservationForm'
 import { RegisterPaymentForm } from '../../payments/components/RegisterPaymentForm'
 import { EditLotDimensionsForm } from '../../lots/components/EditLotDimensionsForm'
+import { LotDimensionImage } from '../../lots/components/LotDimensionImage'
 import type { LotStatusRow } from '../../../types/database.types'
 
 interface LotDetailSheetProps {
@@ -15,10 +16,10 @@ interface LotDetailSheetProps {
 
 type Mode = 'view' | 'reserve' | 'payment' | 'edit-dimensions'
 
-// La dimensión (área + 4 lados) y la disponibilidad son lo único que ve
-// cualquier visitante sin sesión (spec: sin precio aproximado en el
-// catálogo); el resto de filas son de la reserva activa y solo aplican
-// una vez que el lote ya no está disponible.
+// La dimensión (área, perímetro, imagen de cotas) y la disponibilidad son
+// lo único que ve cualquier visitante sin sesión (spec: sin precio
+// aproximado en el catálogo); el resto de filas son de la reserva activa
+// y solo aplican una vez que el lote ya no está disponible.
 export function LotDetailSheet({ lot, onActionSuccess }: LotDetailSheetProps) {
   const { status: authStatus } = useAuth()
   const [mode, setMode] = useState<Mode>('view')
@@ -63,10 +64,6 @@ export function LotDetailSheet({ lot, onActionSuccess }: LotDetailSheetProps) {
 
   const meta = LOT_STATUS_META[lot.status]
 
-  function side(value: number | null) {
-    return value ? `${value} m` : '—'
-  }
-
   return (
     <>
       <h2 className="lot-sheet__title">Lote {lot.lot_code}</h2>
@@ -79,23 +76,11 @@ export function LotDetailSheet({ lot, onActionSuccess }: LotDetailSheetProps) {
       <div className="lot-sheet__rows">
         <div className="lot-sheet__row">
           <span className="lot-sheet__row-label">Área</span>
-          <span>{lot.area ? `${lot.area} m²` : '—'}</span>
+          <span>{lot.area ? `${lot.area.toFixed(2)} m²` : '—'}</span>
         </div>
         <div className="lot-sheet__row">
-          <span className="lot-sheet__row-label">Frente</span>
-          <span>{side(lot.front)}</span>
-        </div>
-        <div className="lot-sheet__row">
-          <span className="lot-sheet__row-label">Fondo</span>
-          <span>{side(lot.back)}</span>
-        </div>
-        <div className="lot-sheet__row">
-          <span className="lot-sheet__row-label">Lateral izquierdo</span>
-          <span>{side(lot.left_side)}</span>
-        </div>
-        <div className="lot-sheet__row">
-          <span className="lot-sheet__row-label">Lateral derecho</span>
-          <span>{side(lot.right_side)}</span>
+          <span className="lot-sheet__row-label">Perímetro</span>
+          <span>{lot.perimeter ? `${lot.perimeter.toFixed(2)} m` : '—'}</span>
         </div>
 
         {lot.status !== 'available' && (
@@ -131,6 +116,8 @@ export function LotDetailSheet({ lot, onActionSuccess }: LotDetailSheetProps) {
           </>
         )}
       </div>
+
+      <LotDimensionImage lotCode={lot.lot_code} />
 
       {lot.status === 'available' && authStatus === 'seller' && (
         <Button onClick={() => setMode('reserve')}>Reservar este lote</Button>

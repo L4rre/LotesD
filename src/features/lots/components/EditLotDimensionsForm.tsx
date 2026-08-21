@@ -18,10 +18,7 @@ interface EditLotDimensionsFormProps {
 // (no es una operación crítica de concurrencia, docs §0.4).
 export function EditLotDimensionsForm({ lot, onSuccess, onCancel }: EditLotDimensionsFormProps) {
   const [area, setArea] = useState(lot.area?.toString() ?? '')
-  const [front, setFront] = useState(lot.front?.toString() ?? '')
-  const [back, setBack] = useState(lot.back?.toString() ?? '')
-  const [leftSide, setLeftSide] = useState(lot.left_side?.toString() ?? '')
-  const [rightSide, setRightSide] = useState(lot.right_side?.toString() ?? '')
+  const [perimeter, setPerimeter] = useState(lot.perimeter?.toString() ?? '')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -36,10 +33,7 @@ export function EditLotDimensionsForm({ lot, onSuccess, onCancel }: EditLotDimen
 
     const values = {
       area: toNullableNumber(area),
-      front: toNullableNumber(front),
-      back: toNullableNumber(back),
-      left_side: toNullableNumber(leftSide),
-      right_side: toNullableNumber(rightSide),
+      perimeter: toNullableNumber(perimeter),
     }
     for (const value of Object.values(values)) {
       if (value !== null && (!Number.isFinite(value) || value <= 0)) {
@@ -74,36 +68,12 @@ export function EditLotDimensionsForm({ lot, onSuccess, onCancel }: EditLotDimen
         onChange={(e) => setArea(e.target.value)}
       />
       <TextField
-        label="Frente (m)"
+        label="Perímetro (m)"
         type="number"
         min="0"
         step="0.01"
-        value={front}
-        onChange={(e) => setFront(e.target.value)}
-      />
-      <TextField
-        label="Fondo (m)"
-        type="number"
-        min="0"
-        step="0.01"
-        value={back}
-        onChange={(e) => setBack(e.target.value)}
-      />
-      <TextField
-        label="Lateral izquierdo (m)"
-        type="number"
-        min="0"
-        step="0.01"
-        value={leftSide}
-        onChange={(e) => setLeftSide(e.target.value)}
-      />
-      <TextField
-        label="Lateral derecho (m)"
-        type="number"
-        min="0"
-        step="0.01"
-        value={rightSide}
-        onChange={(e) => setRightSide(e.target.value)}
+        value={perimeter}
+        onChange={(e) => setPerimeter(e.target.value)}
       />
 
       <Button type="submit" disabled={saving}>

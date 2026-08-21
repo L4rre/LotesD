@@ -3,7 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import { Alert } from '../../../components/ui/Alert'
 import { FullScreenLoader } from '../../../components/ui/FullScreenLoader'
-import { DemoMap } from '../../map/DemoMap'
+import { TerrainMap } from '../../map/TerrainMap'
+import { BUENA_FORTUNA_LAYOUT } from '../../map/terrainData/buenaFortuna'
 import { useLotStatuses } from '../../map/hooks/useLotStatuses'
 import { useAuth } from '../../auth/useAuth'
 import type { Project } from '../../../types/database.types'
@@ -73,7 +74,9 @@ export function ProjectDetailPage() {
           <Alert variant="info">Este terreno todavía no tiene lotes cargados.</Alert>
         </div>
       ) : (
-        <DemoMap lots={lots} onRefresh={refreshLots} />
+        // Único terreno por ahora -> layout fijo; con más de uno, esto
+        // sería un lookup por project.id (docs §16).
+        <TerrainMap layout={BUENA_FORTUNA_LAYOUT} lots={lots} onRefresh={refreshLots} />
       )}
     </div>
   )

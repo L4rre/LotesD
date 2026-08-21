@@ -40,3 +40,12 @@ export function formatDate(iso: string | null): string {
     year: 'numeric',
   })
 }
+
+// La imagen de cotas de un lote se deriva de su lot_code, no se guarda en
+// la base (evita duplicar el mismo dato en dos lugares): basta con dejar
+// caer un archivo `public/lot-details/<lot_code>.png` para que la ficha lo
+// muestre automáticamente. import.meta.env.BASE_URL es necesario porque
+// GitHub Pages sirve el sitio bajo el subpath /LotesD/, no en la raíz.
+export function dimensionImageUrl(lotCode: string): string {
+  return `${import.meta.env.BASE_URL}lot-details/${lotCode}.png`
+}

@@ -5,7 +5,8 @@ import { Alert } from '../../components/ui/Alert'
 import { Button } from '../../components/ui/Button'
 import { FullScreenLoader } from '../../components/ui/FullScreenLoader'
 import { BottomSheet } from '../../components/ui/BottomSheet'
-import { DemoMap } from '../map/DemoMap'
+import { TerrainMap } from '../map/TerrainMap'
+import { BUENA_FORTUNA_LAYOUT } from '../map/terrainData/buenaFortuna'
 import { useLotStatuses } from '../map/hooks/useLotStatuses'
 import { useAuth } from '../auth/useAuth'
 import { AdminLoginForm } from '../auth/components/AdminLoginForm'
@@ -98,7 +99,14 @@ export function HomePage() {
         </div>
       )}
 
-      {project && (loadingLots ? <FullScreenLoader /> : <DemoMap lots={lots} onRefresh={refreshLots} />)}
+      {project &&
+        (loadingLots ? (
+          <FullScreenLoader />
+        ) : (
+          // Único terreno por ahora -> layout fijo; con más de uno, esto
+          // sería un lookup por project.id (docs §16).
+          <TerrainMap layout={BUENA_FORTUNA_LAYOUT} lots={lots} onRefresh={refreshLots} />
+        ))}
 
       <BottomSheet open={loginModal !== 'none'} onClose={() => setLoginModal('none')}>
         {loginModal === 'admin' && <AdminLoginForm onSuccess={() => setLoginModal('none')} />}

@@ -331,6 +331,16 @@ body {
   color: var(--text-muted);
 }
 
+.lot-sheet__dimension-image {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0.75rem 0;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+}
+
 .map-screen {
   position: fixed;
   inset: 0;
