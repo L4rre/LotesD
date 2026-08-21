@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createHashRouter } from 'react-router-dom'
 import { RoleSelectPage } from './features/auth/pages/RoleSelectPage'
 import { AdminLoginPage } from './features/auth/pages/AdminLoginPage'
 import { SellerLoginPage } from './features/auth/pages/SellerLoginPage'
@@ -9,7 +9,11 @@ import { AdminSellersPage } from './features/sellers/pages/AdminSellersPage'
 import { ProjectsListPage } from './features/projects/pages/ProjectsListPage'
 import { ProjectDetailPage } from './features/projects/pages/ProjectDetailPage'
 
-export const router = createBrowserRouter([
+// HashRouter (URLs con #) en vez de BrowserRouter: GitHub Pages es hosting
+// estático puro, sin reglas de rewrite del lado del servidor — con rutas
+// "normales" recargar /admin daría 404. Con hash (/#/admin) todo se
+// resuelve en el cliente sin depender del servidor. Ver docs §Deployment.
+export const router = createHashRouter([
   { path: '/', element: <RoleSelectPage /> },
   { path: '/admin/login', element: <AdminLoginPage /> },
   {
