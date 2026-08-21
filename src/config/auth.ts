@@ -12,9 +12,9 @@ export function adminUsernameToEmail(username: string): string {
 // tire la sesión.
 export const SELLER_HEARTBEAT_INTERVAL_MS = 45_000
 
-// Expiración por inactividad (docs §10): 1 hora sin interacción, para
+// Expiración por inactividad (docs §10): 3 horas sin interacción, para
 // admin y vendedor por igual.
-export const IDLE_LOGOUT_LIMIT_MS = 60 * 60 * 1000
+export const IDLE_LOGOUT_LIMIT_MS = 3 * 60 * 60 * 1000
 export const IDLE_CHECK_INTERVAL_MS = 60_000
 
 export const SELLER_SESSION_STORAGE_KEY = 'lotesd.sellerSessionId'

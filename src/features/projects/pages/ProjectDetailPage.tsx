@@ -8,20 +8,24 @@ import { useLotStatuses } from '../../map/hooks/useLotStatuses'
 import { useAuth } from '../../auth/useAuth'
 import type { Project } from '../../../types/database.types'
 
+// Pública (§4): espera a que AuthProvider termine de darle una sesión
+// anónima al visitante (bootstrap de AuthContext) antes de consultar
+// `projects`/`lot_status_view`, para que un enlace directo a este terreno
+// no dispare la query antes de que exista sesión.
 export function ProjectDetailPage() {
-  const { admin } = useAuth()
+  const { admin, status } = useAuth()
   const { projectId } = useParams<{ projectId: string }>()
   const [project, setProject] = useState<Project | null>(null)
   const [loadingProject, setLoadingProject] = useState(true)
   const [projectError, setProjectError] = useState<string | null>(null)
 
-  const { lots, loading: loadingLots, error: lotsError, refresh: refreshLots } = useLotStatuses(projectId)
+  const { lots, loading: loadingLots, error: lotsError, refresh: refreshLots } = useLotStatuses(
+    status !== 'loading' ? projectId : undefined,
+  )
 
   useEffect(() => {
+    if (status === 'loading') return
     let cancelled = false
-    // oxlint-disable-next-line react/set-state-in-effect
-    setLoadingProject(true)
-    setProjectError(null)
     supabase
       .from('projects')
       .select('id, name, description, created_at')
@@ -39,9 +43,9 @@ export function ProjectDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [projectId])
+  }, [status, projectId])
 
-  if (loadingProject || loadingLots) return <FullScreenLoader />
+  if (status === 'loading' || loadingProject || loadingLots) return <FullScreenLoader />
 
   if (projectError || !project) {
     return (

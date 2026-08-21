@@ -343,7 +343,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.5rem;
   padding: 0.85rem 1rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -352,7 +352,13 @@ body {
 
 .map-screen__title {
   margin: 0;
+  flex: 1;
+  min-width: 0;
   font-size: 1.1rem;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .map-canvas-wrap {
@@ -425,6 +431,24 @@ body {
 .dashboard-quicklinks {
   display: flex;
   gap: 0.6rem;
+}
+
+/* Los botones de .btn están pensados para formularios (ancho completo,
+   padding generoso); dentro del encabezado del mapa necesitan ser
+   compactos para caber junto al título en una pantalla angosta, y no
+   encogerse (el título es el que cede espacio, con elipsis). */
+.map-screen__header .dashboard-quicklinks,
+.map-screen__header > a {
+  flex-shrink: 0;
+}
+
+.map-screen__header .dashboard-quicklinks .btn,
+.map-screen__header a {
+  width: auto;
+  min-height: auto;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
 }
 
 .stat-grid {

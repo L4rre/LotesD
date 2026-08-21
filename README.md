@@ -10,20 +10,28 @@ decisiones de diseño en [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 ## Estado actual
 
-**Fase 16-18** (de 22) — Dashboards: el admin tiene un **dashboard
-general** (`/admin`, agrega todos los terrenos y vendedores) y un
-**dashboard por terreno** (`/terrenos/:id/dashboard`, enlace
-"Estadísticas" desde el mapa), ambos con conteos por estado (disponible/
-reservado/pagado), valor reservado/cobrado/saldo, una tabla por vendedor
-(reservas, iniciales, clientes, valor) y listas de reservas/pagos
+**Fase 16-18** (de 22), más una ronda de ajustes pedidos tras probar todo
+en vivo — **la página de inicio (`/`) ahora es pública**: cualquier
+visitante ve el mapa del terreno (disponibilidad + dimensiones de cada
+lote al hacer clic) sin iniciar sesión, con dos botones "Administrador" /
+"Vendedor" que abren el login como ventana modal sobre el mismo mapa; una
+vez logeado, el encabezado cambia según el rol y aparece "Cerrar sesión"
+(ver `docs/ARCHITECTURE.md` §4, §13). Cada lote muestra frente/fondo/
+laterales por separado (no un simple ancho×alto, para lotes irregulares)
+y ya no tiene precio de referencia — solo el admin puede editar su
+dimensión. Los formularios de reserva y pago guardan un borrador en el
+navegador mientras se escriben, para no perder lo ya escrito si se cierra
+la app a medias. El admin tiene un **dashboard general** (`/admin`) y un
+**dashboard por terreno** (`/terrenos/:id/dashboard`), ambos con conteos
+por estado, valor reservado/cobrado/saldo, tabla por vendedor y listas de
 recientes — comparten un mismo hook y componente (spec §25, ver
 `docs/ARCHITECTURE.md` §12). Cada vendedor tiene su propia sección **"Mi
 actividad"** (`/vendedor`) con solo sus propias reservas y clientes, nunca
-los de otro vendedor (spec §49/§51). Las Fases 10-15 dejaron reservas,
-pagos y Realtime en el mapa; ver `docs/ARCHITECTURE.md` §0.7-§0.8 por dos
-correcciones de fases anteriores (Realtime filtrando el hash de la
-contraseña; pgcrypto en el esquema `extensions` de Supabase). Falta:
-auditoría (Fase 19) y el resto.
+los de otro vendedor (spec §49/§51). Ver `docs/ARCHITECTURE.md` §0.7-§0.8
+por dos correcciones de fases anteriores (Realtime filtrando el hash de
+la contraseña; pgcrypto en el esquema `extensions` de Supabase). Falta:
+auditoría (Fase 19), cancelación de reservas, historial por lote y el
+resto.
 
 **Para probar el login real** necesitas un proyecto Supabase con las
 migraciones aplicadas — ver la sección [Base de datos](#base-de-datos-supabase)
@@ -93,8 +101,8 @@ mutación sensible (ver `docs/ARCHITECTURE.md` §0, §11).
 
 1. Crea el proyecto en [supabase.com](https://supabase.com).
 2. En Authentication → Sign In / Providers, habilita **Anonymous sign-ins**
-   (apagado por defecto). El login de vendedor lo necesita — ver
-   `docs/ARCHITECTURE.md` §4.
+   (apagado por defecto). La home pública y el login de vendedor lo
+   necesitan — ver `docs/ARCHITECTURE.md` §4.
 3. En el SQL Editor del dashboard, corre cada archivo de
    `supabase/migrations/` en orden (o usa `supabase db push` con el CLI si
    lo prefieres).

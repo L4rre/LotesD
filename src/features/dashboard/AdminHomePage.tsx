@@ -14,7 +14,7 @@ export function AdminHomePage() {
     <DashboardView
       header={
         <header className="map-screen__header">
-          <span />
+          <Link to="/">← Inicio</Link>
           <h1 className="map-screen__title">Hola, {admin?.displayName}</h1>
           <Button variant="secondary" onClick={() => signOutAdmin()}>
             Salir

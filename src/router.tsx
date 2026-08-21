@@ -1,8 +1,6 @@
 import { createHashRouter } from 'react-router-dom'
-import { RoleSelectPage } from './features/auth/pages/RoleSelectPage'
-import { AdminLoginPage } from './features/auth/pages/AdminLoginPage'
-import { SellerLoginPage } from './features/auth/pages/SellerLoginPage'
-import { RequireAdmin, RequireAnyRole, RequireSeller } from './features/auth/ProtectedRoute'
+import { HomePage } from './features/home/HomePage'
+import { RequireAdmin, RequireSeller } from './features/auth/ProtectedRoute'
 import { AdminHomePage } from './features/dashboard/AdminHomePage'
 import { SellerHomePage } from './features/sellers/SellerHomePage'
 import { AdminSellersPage } from './features/sellers/pages/AdminSellersPage'
@@ -14,9 +12,13 @@ import { ProjectDashboardPage } from './features/dashboard/pages/ProjectDashboar
 // estático puro, sin reglas de rewrite del lado del servidor — con rutas
 // "normales" recargar /admin daría 404. Con hash (/#/admin) todo se
 // resuelve en el cliente sin depender del servidor. Ver docs §Deployment.
+//
+// "/" es pública (cualquier visitante ve disponibilidad y dimensiones sin
+// sesión); el login vive como Bottom Sheet dentro de HomePage, no como
+// ruta propia. "/terrenos" y "/terrenos/:projectId" también son públicas
+// por la misma razón. El resto exige el rol correspondiente.
 export const router = createHashRouter([
-  { path: '/', element: <RoleSelectPage /> },
-  { path: '/admin/login', element: <AdminLoginPage /> },
+  { path: '/', element: <HomePage /> },
   {
     path: '/admin',
     element: (
@@ -33,7 +35,6 @@ export const router = createHashRouter([
       </RequireAdmin>
     ),
   },
-  { path: '/vendedor/login', element: <SellerLoginPage /> },
   {
     path: '/vendedor',
     element: (
@@ -42,22 +43,8 @@ export const router = createHashRouter([
       </RequireSeller>
     ),
   },
-  {
-    path: '/terrenos',
-    element: (
-      <RequireAnyRole>
-        <ProjectsListPage />
-      </RequireAnyRole>
-    ),
-  },
-  {
-    path: '/terrenos/:projectId',
-    element: (
-      <RequireAnyRole>
-        <ProjectDetailPage />
-      </RequireAnyRole>
-    ),
-  },
+  { path: '/terrenos', element: <ProjectsListPage /> },
+  { path: '/terrenos/:projectId', element: <ProjectDetailPage /> },
   {
     path: '/terrenos/:projectId/dashboard',
     element: (

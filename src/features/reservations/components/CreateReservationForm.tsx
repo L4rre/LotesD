@@ -4,6 +4,7 @@ import { Button } from '../../../components/ui/Button'
 import { TextField } from '../../../components/ui/TextField'
 import { Alert } from '../../../components/ui/Alert'
 import { translateAuthError } from '../../../domain/rpcErrors'
+import { clearFormDraft, useDraftState } from '../../../hooks/useFormDraft'
 
 interface CreateReservationFormProps {
   lotId: string
@@ -11,19 +12,44 @@ interface CreateReservationFormProps {
   onCancel: () => void
 }
 
+interface ReservationDraft {
+  clientName: string
+  clientPhone: string
+  clientDni: string
+  agreedPrice: string
+  initialAmount: string
+  notes: string
+}
+
+const EMPTY_DRAFT: ReservationDraft = {
+  clientName: '',
+  clientPhone: '',
+  clientDni: '',
+  agreedPrice: '',
+  initialAmount: '',
+  notes: '',
+}
+
 // Registra la reserva de un lote (spec §22): el vendedor completa cliente
 // + precio acordado + inicial, y create_reservation (SECURITY DEFINER)
 // resuelve el vendedor del lado del servidor a partir de su sesión
 // activa -- este formulario nunca envía "quién soy" como parámetro.
 export function CreateReservationForm({ lotId, onSuccess, onCancel }: CreateReservationFormProps) {
-  const [clientName, setClientName] = useState('')
-  const [clientPhone, setClientPhone] = useState('')
-  const [clientDni, setClientDni] = useState('')
-  const [agreedPrice, setAgreedPrice] = useState('')
-  const [initialAmount, setInitialAmount] = useState('')
-  const [notes, setNotes] = useState('')
+  const draftKey = `lotesd.draft.reservation.${lotId}`
+  const [draft, setDraft] = useDraftState<ReservationDraft>(draftKey, EMPTY_DRAFT)
+  const { clientName, clientPhone, clientDni, agreedPrice, initialAmount, notes } = draft
+
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  function updateDraft(patch: Partial<ReservationDraft>) {
+    setDraft({ ...draft, ...patch })
+  }
+
+  function handleCancel() {
+    clearFormDraft(draftKey)
+    onCancel()
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -56,6 +82,7 @@ export function CreateReservationForm({ lotId, onSuccess, onCancel }: CreateRese
         p_notes: notes.trim() || null,
       })
       if (error) throw error
+      clearFormDraft(draftKey)
       onSuccess()
     } catch (err) {
       setError(err instanceof Error ? translateAuthError(err.message) : 'Error inesperado.')
@@ -72,18 +99,18 @@ export function CreateReservationForm({ lotId, onSuccess, onCancel }: CreateRese
       <TextField
         label="Cliente"
         value={clientName}
-        onChange={(e) => setClientName(e.target.value)}
+        onChange={(e) => updateDraft({ clientName: e.target.value })}
         required
       />
       <TextField
         label="Teléfono (opcional)"
         value={clientPhone}
-        onChange={(e) => setClientPhone(e.target.value)}
+        onChange={(e) => updateDraft({ clientPhone: e.target.value })}
       />
       <TextField
         label="DNI (opcional)"
         value={clientDni}
-        onChange={(e) => setClientDni(e.target.value)}
+        onChange={(e) => updateDraft({ clientDni: e.target.value })}
       />
       <TextField
         label="Precio acordado (S/)"
@@ -91,7 +118,7 @@ export function CreateReservationForm({ lotId, onSuccess, onCancel }: CreateRese
         min="0"
         step="0.01"
         value={agreedPrice}
-        onChange={(e) => setAgreedPrice(e.target.value)}
+        onChange={(e) => updateDraft({ agreedPrice: e.target.value })}
         required
       />
       <TextField
@@ -100,18 +127,18 @@ export function CreateReservationForm({ lotId, onSuccess, onCancel }: CreateRese
         min="0"
         step="0.01"
         value={initialAmount}
-        onChange={(e) => setInitialAmount(e.target.value)}
+        onChange={(e) => updateDraft({ initialAmount: e.target.value })}
       />
       <TextField
         label="Observaciones (opcional)"
         value={notes}
-        onChange={(e) => setNotes(e.target.value)}
+        onChange={(e) => updateDraft({ notes: e.target.value })}
       />
 
       <Button type="submit" disabled={submitting}>
         {submitting ? 'Guardando…' : 'Confirmar reserva'}
       </Button>
-      <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>
+      <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
         Cancelar
       </Button>
     </form>

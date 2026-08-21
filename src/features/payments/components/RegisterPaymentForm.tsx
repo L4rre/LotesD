@@ -5,6 +5,7 @@ import { TextField } from '../../../components/ui/TextField'
 import { Alert } from '../../../components/ui/Alert'
 import { formatCurrency } from '../../../domain/lotStatus'
 import { translateAuthError } from '../../../domain/rpcErrors'
+import { clearFormDraft, useDraftState } from '../../../hooks/useFormDraft'
 
 interface RegisterPaymentFormProps {
   reservationId: string
@@ -12,6 +13,13 @@ interface RegisterPaymentFormProps {
   onSuccess: () => void
   onCancel: () => void
 }
+
+interface PaymentDraft {
+  amount: string
+  effectiveDate: string
+}
+
+const EMPTY_DRAFT: PaymentDraft = { amount: '', effectiveDate: '' }
 
 // Pagos posteriores: solo el administrador (spec §29, §41). No hay botón
 // "marcar como pagado" -- el estado pasa a PAGADO solo cuando la suma de
@@ -22,10 +30,21 @@ export function RegisterPaymentForm({
   onSuccess,
   onCancel,
 }: RegisterPaymentFormProps) {
-  const [amount, setAmount] = useState('')
-  const [effectiveDate, setEffectiveDate] = useState('')
+  const draftKey = `lotesd.draft.payment.${reservationId}`
+  const [draft, setDraft] = useDraftState<PaymentDraft>(draftKey, EMPTY_DRAFT)
+  const { amount, effectiveDate } = draft
+
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  function updateDraft(patch: Partial<PaymentDraft>) {
+    setDraft({ ...draft, ...patch })
+  }
+
+  function handleCancel() {
+    clearFormDraft(draftKey)
+    onCancel()
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -45,6 +64,7 @@ export function RegisterPaymentForm({
         p_effective_at: effectiveDate ? new Date(effectiveDate).toISOString() : undefined,
       })
       if (error) throw error
+      clearFormDraft(draftKey)
       onSuccess()
     } catch (err) {
       setError(err instanceof Error ? translateAuthError(err.message) : 'Error inesperado.')
@@ -65,20 +85,20 @@ export function RegisterPaymentForm({
         min="0"
         step="0.01"
         value={amount}
-        onChange={(e) => setAmount(e.target.value)}
+        onChange={(e) => updateDraft({ amount: e.target.value })}
         required
       />
       <TextField
         label="Fecha (opcional, hoy por defecto)"
         type="date"
         value={effectiveDate}
-        onChange={(e) => setEffectiveDate(e.target.value)}
+        onChange={(e) => updateDraft({ effectiveDate: e.target.value })}
       />
 
       <Button type="submit" disabled={submitting}>
         {submitting ? 'Guardando…' : 'Registrar pago'}
       </Button>
-      <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>
+      <Button type="button" variant="secondary" onClick={handleCancel} disabled={submitting}>
         Cancelar
       </Button>
     </form>

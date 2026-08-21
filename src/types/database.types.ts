@@ -39,8 +39,10 @@ export interface SellerAccessState {
 
 export type LotCommercialStatus = 'available' | 'reserved' | 'paid'
 
-// Refleja supabase/migrations/20260820120400_lot_status_view.sql: estado
-// y saldo siempre calculados, nunca almacenados (spec §10, §11, §30).
+// Refleja supabase/migrations/20260820120400_lot_status_view.sql (y el
+// ajuste de 20260821140000_lot_dimensions_and_no_price.sql: 4 lados
+// independientes en vez de front/depth, sin reference_price): estado y
+// saldo siempre calculados, nunca almacenados (spec §10, §11, §30).
 export interface LotStatusRow {
   lot_id: string
   project_id: string
@@ -49,8 +51,9 @@ export interface LotStatusRow {
   lot_code: string
   area: number | null
   front: number | null
-  depth: number | null
-  reference_price: number | null
+  back: number | null
+  left_side: number | null
+  right_side: number | null
   geometry_id: string
   active_reservation_id: string | null
   client_id: string | null

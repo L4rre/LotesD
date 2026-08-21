@@ -101,8 +101,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     async function bootstrap() {
       const {
-        data: { session },
+        data: { session: existingSession },
       } = await supabase.auth.getSession()
+      if (cancelled) return
+
+      // Home pública (docs §4): cualquier visitante sin sesión recibe una
+      // sesión anónima transparente para que RLS (abierta a
+      // `authenticated`) deje leer el mapa sin pedir login. Si falla (sin
+      // red), sigue quedando 'signed-out' -- las queries de cada pantalla
+      // fallarán con su propio mensaje, no hace falta manejarlo acá.
+      let session = existingSession
+      if (!session) {
+        const { data } = await supabase.auth.signInAnonymously().catch(() => ({ data: null }))
+        session = data?.session ?? null
+      }
       if (cancelled) return
 
       if (!session) {
@@ -240,7 +252,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(id)
   }, [status, seller])
 
-  // Expiración por inactividad (docs §10): 1h sin interacción cierra la
+  // Expiración por inactividad (docs §10): 3h sin interacción cierra la
   // sesión, sea admin o vendedor, aunque el heartbeat siga "vivo".
   useEffect(() => {
     if (status !== 'admin' && status !== 'seller') return

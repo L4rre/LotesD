@@ -16,7 +16,7 @@ export function SellerHomePage() {
   return (
     <div className="dashboard-screen">
       <header className="map-screen__header">
-        <span />
+        <Link to="/">← Inicio</Link>
         <h1 className="map-screen__title">Hola, {seller?.displayName}</h1>
         <Button variant="secondary" onClick={() => signOutSeller()}>
           Salir

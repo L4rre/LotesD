@@ -1,50 +1,26 @@
-import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../../../lib/supabase'
-import { Button } from '../../../components/ui/Button'
-import { TextField } from '../../../components/ui/TextField'
 import { Alert } from '../../../components/ui/Alert'
 import { FullScreenLoader } from '../../../components/ui/FullScreenLoader'
 import { useAuth } from '../../auth/useAuth'
 import { useProjects } from '../hooks/useProjects'
 
+// Terrenos y lotes se cargan por diseño de plano, fuera de la app: esta
+// pantalla es solo un listado (sin "crear terreno") para cambiar entre
+// varios terrenos cuando exista más de uno.
 export function ProjectsListPage() {
   const { status } = useAuth()
-  const { projects, loading, error, refresh } = useProjects()
+  // Pantalla pública (§4): espera a que AuthProvider termine de darle una
+  // sesión anónima al visitante antes de consultar `projects`.
+  const { projects, loading, error } = useProjects(status !== 'loading')
 
-  const [showForm, setShowForm] = useState(false)
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [formError, setFormError] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
+  const backTo = status === 'admin' ? '/admin' : status === 'seller' ? '/vendedor' : '/'
 
-  async function handleCreate(event: FormEvent) {
-    event.preventDefault()
-    if (!name.trim()) return
-    setFormError(null)
-    setSaving(true)
-    try {
-      const { error } = await supabase
-        .from('projects')
-        .insert({ name: name.trim(), description: description.trim() || null })
-      if (error) throw error
-      setName('')
-      setDescription('')
-      setShowForm(false)
-      await refresh()
-    } catch {
-      setFormError('No se pudo crear el terreno. Intenta de nuevo.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  if (loading) return <FullScreenLoader />
+  if (status === 'loading' || loading) return <FullScreenLoader />
 
   return (
     <main className="screen">
       <div className="screen__card" style={{ maxWidth: '32rem' }}>
-        <Link to={status === 'admin' ? '/admin' : '/vendedor'}>← Volver</Link>
+        <Link to={backTo}>← Volver</Link>
         <h1 className="screen__title">Terrenos</h1>
 
         {error && <Alert variant="error">{error}</Alert>}
@@ -63,35 +39,6 @@ export function ProjectsListPage() {
             </li>
           ))}
         </ul>
-
-        {status === 'admin' && !showForm && (
-          <Button variant="secondary" onClick={() => setShowForm(true)}>
-            Nuevo terreno
-          </Button>
-        )}
-
-        {status === 'admin' && showForm && (
-          <form className="panel__form" onSubmit={handleCreate}>
-            {formError && <Alert variant="error">{formError}</Alert>}
-            <TextField
-              label="Nombre"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-            <TextField
-              label="Descripción (opcional)"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-            <Button type="submit" disabled={saving}>
-              {saving ? 'Creando…' : 'Crear terreno'}
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
-              Cancelar
-            </Button>
-          </form>
-        )}
       </div>
     </main>
   )

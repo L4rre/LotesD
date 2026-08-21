@@ -10,12 +10,17 @@ interface ProjectRow extends Project {
   lots: { count: number }[] | null
 }
 
-export function useProjects() {
+// `enabled` deja retrasar el fetch hasta que exista una sesión (§4: la
+// pantalla que llama a este hook es pública, así que espera a que
+// AuthProvider termine de darle una sesión anónima al visitante antes de
+// consultar `projects`, igual que useSellerAvailability).
+export function useProjects(enabled = true) {
   const [projects, setProjects] = useState<ProjectWithLotCount[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
+    if (!enabled) return
     setError(null)
     const { data, error } = await supabase
       .from('projects')
@@ -39,7 +44,7 @@ export function useProjects() {
       })),
     )
     setLoading(false)
-  }, [])
+  }, [enabled])
 
   useEffect(() => {
     // oxlint-disable-next-line react/set-state-in-effect

@@ -229,6 +229,11 @@ projects (
   created_at  timestamptz not null default now()
 )
 
+-- Nota (20260821140000_lot_dimensions_and_no_price.sql): front/depth se
+-- reemplazó por 4 lados independientes (lotes irregulares no son
+-- rectángulos perfectos), y se retiró reference_price por completo -- un
+-- lote no tiene "costo aproximado", solo dimensión y disponibilidad
+-- (agreed_price de la reserva es un concepto aparte, no se toca).
 lots (
   id              uuid primary key default gen_random_uuid(),
   project_id      uuid not null references projects(id),
@@ -236,9 +241,10 @@ lots (
   lot_number      int not null,
   lot_code        text not null,          -- 'Y-01'
   area            numeric,
-  front           numeric,
-  depth           numeric,
-  reference_price numeric,                -- precio comercial de referencia (no vinculante)
+  front           numeric,                -- frente
+  back            numeric,                -- fondo
+  left_side       numeric,                -- lateral izquierdo
+  right_side      numeric,                -- lateral derecho
   geometry_id     text not null,          -- id del elemento SVG correspondiente
   created_at      timestamptz not null default now(),
   unique (project_id, lot_code)
@@ -385,6 +391,20 @@ solo cambia el parámetro.
   4. Si todo va bien, devuelve la fila de `seller_sessions`; el cliente la
      guarda (no como única fuente de verdad — el servidor manda) y arranca
      el heartbeat.
+- **Home pública, sesión anónima para todo visitante:** originalmente la
+  sesión anónima solo se pedía al entrar a la pantalla de login de
+  vendedor. Se extendió para que **cualquier visitante sin sesión** la
+  reciba de forma transparente, ni bien carga la app (dentro del
+  `bootstrap()` de `AuthProvider`, antes de resolver `status`) — no solo
+  quien elige "Vendedor". Esto es lo que permite que `/` sea directamente
+  el mapa del terreno, visible para cualquiera sin elegir un rol primero
+  (spec: un curioso debe poder ver disponibilidad y dimensiones sin
+  iniciar sesión): RLS sigue siendo `to authenticated` sin ningún cambio,
+  simplemente todos los visitantes ahora entran a esa categoría. Elegir
+  "Administrador" o "Vendedor" ya no navega a otra pantalla — abre un
+  Bottom Sheet con el formulario correspondiente sobre el mismo mapa; una
+  vez logeado, el encabezado de esa misma pantalla cambia según el rol
+  (enlaces a su panel + botón "Cerrar sesión").
 
 ## 5. Flujo de vendedores (selección, exclusividad, heartbeat)
 
@@ -500,18 +520,18 @@ solo cambia el parámetro.
   §34) y que escale razonablemente a 8 terrenos × 200 lotes sin recalcular
   agregados globales en cada pago.
 
-## 10. Expiración por inactividad (1 hora)
+## 10. Expiración por inactividad (3 horas)
 
 Distinto del heartbeat técnico del §5 (que detecta pestañas
 cerradas/crasheadas para liberar rápido el número de vendedor, ~3 min), esto
 es una política de seguridad: si **admin o vendedor** no interactúan con la
-app (sin click/tecla/touch/scroll) durante 60 minutos, la sesión se cierra
+app (sin click/tecla/touch/scroll) durante 3 horas, la sesión se cierra
 sola, aunque la pestaña siga abierta y el heartbeat siga "vivo".
 
 - Un watchdog en el cliente (hook `useIdleLogout`, compartido por ambos
   roles) guarda `lastActivityAt` en memoria, actualizado por listeners
   pasivos de `pointerdown`/`keydown`/`touchstart`/`scroll`. Cada minuto
-  revisa si pasó 1h desde la última interacción.
+  revisa si pasaron 3h desde la última interacción.
 - Al cumplirse: vendedor → llama `seller_logout(session_id)` y vuelve al
   selector; admin → `supabase.auth.signOut()` y vuelve al login. Ambos casos
   escriben `audit_logs` con `action='session_expired_inactivity'`.
@@ -583,3 +603,39 @@ sola, aunque la pestaña siga abierta y el heartbeat siga "vivo".
   pantalla que se deja abierta esperando cambios en vivo; se recalcula al
   entrar a la pantalla. Si en el futuro se necesita, el mismo patrón de
   suscripción de `useLotStatuses` aplica igual.
+
+## 13. Ajustes post-Fase 16-18 (home pública, dimensiones, sin creación de terreno)
+
+- **Home pública** (spec: cualquier curioso ve disponibilidad y
+  dimensiones sin loguearse): ver §4 para el mecanismo (sesión anónima
+  extendida a todo visitante). `/terrenos` y `/terrenos/:projectId` también
+  son públicas por la misma razón; solo `/admin`, `/admin/vendedores`,
+  `/vendedor` y `/terrenos/:id/dashboard` exigen el rol correspondiente.
+- **Edición de dimensión (admin-only):** un lote no se crea desde la app
+  (§0.4 ya establecía que `lots` es de escritura admin-only vía RLS
+  directa, sin RPC — no es crítico para concurrencia), pero ahora sí se
+  puede **editar** su área/frente/fondo/laterales desde la ficha del lote
+  (`EditLotDimensionsForm`). Sigue siendo un `update` directo a `lots`
+  (RLS `lots_admin_write` ya exige `is_admin()`), no una RPC nueva.
+- **Sin "crear terreno/lote" desde la UI:** un terreno completo (con sus
+  lotes y geometría) se carga por diseño de plano, fuera de la app — se
+  quitó el formulario de creación de `ProjectsListPage`. La ruta
+  `/terrenos` queda como un simple listado para cambiar entre varios
+  terrenos cuando exista más de uno.
+- **Autosave de borrador en formularios cortos** (`CreateReservationForm`,
+  `RegisterPaymentForm`): ninguno de los dos persiste nada en el servidor
+  hasta el submit final (no hay estado intermedio de "reserva a medias" en
+  la base de datos), así que guardar el borrador en `localStorage` es
+  seguro — si se cierra la app o se apaga el celular a medio formulario,
+  al reabrir el mismo lote se recupera lo ya escrito. Implementado como
+  `useDraftState(key, initial)` en `src/hooks/useFormDraft.ts`: el estado
+  se inicializa de forma **perezosa y síncrona** leyendo `localStorage`
+  directamente en el `useState(() => …)`, en vez de un efecto de
+  "restaurar" separado de un efecto de "guardar" — con dos efectos
+  separados hay una ventana real donde el efecto de guardado corre con el
+  valor todavía-no-restaurado y pisa el borrador ya guardado (se detectó
+  justamente así: reproducible en desarrollo porque `StrictMode` invoca los
+  efectos dos veces al montar, exactamente el escenario que expone la
+  ventana de carrera). El borrador se limpia (`clearFormDraft`) al
+  confirmar el envío o al cancelar explícitamente.
+- **Idle timeout:** 1h → 3h (config §10), sin otro cambio de mecanismo.

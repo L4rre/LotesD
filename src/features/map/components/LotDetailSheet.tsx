@@ -5,6 +5,7 @@ import { Alert } from '../../../components/ui/Alert'
 import { useAuth } from '../../auth/useAuth'
 import { CreateReservationForm } from '../../reservations/components/CreateReservationForm'
 import { RegisterPaymentForm } from '../../payments/components/RegisterPaymentForm'
+import { EditLotDimensionsForm } from '../../lots/components/EditLotDimensionsForm'
 import type { LotStatusRow } from '../../../types/database.types'
 
 interface LotDetailSheetProps {
@@ -12,8 +13,12 @@ interface LotDetailSheetProps {
   onActionSuccess: () => void
 }
 
-type Mode = 'view' | 'reserve' | 'payment'
+type Mode = 'view' | 'reserve' | 'payment' | 'edit-dimensions'
 
+// La dimensión (área + 4 lados) y la disponibilidad son lo único que ve
+// cualquier visitante sin sesión (spec: sin precio aproximado en el
+// catálogo); el resto de filas son de la reserva activa y solo aplican
+// una vez que el lote ya no está disponible.
 export function LotDetailSheet({ lot, onActionSuccess }: LotDetailSheetProps) {
   const { status: authStatus } = useAuth()
   const [mode, setMode] = useState<Mode>('view')
@@ -46,7 +51,21 @@ export function LotDetailSheet({ lot, onActionSuccess }: LotDetailSheetProps) {
     )
   }
 
+  if (mode === 'edit-dimensions') {
+    return (
+      <EditLotDimensionsForm
+        lot={lot}
+        onSuccess={() => handleActionSuccess('Dimensión actualizada.')}
+        onCancel={() => setMode('view')}
+      />
+    )
+  }
+
   const meta = LOT_STATUS_META[lot.status]
+
+  function side(value: number | null) {
+    return value ? `${value} m` : '—'
+  }
 
   return (
     <>
@@ -62,13 +81,24 @@ export function LotDetailSheet({ lot, onActionSuccess }: LotDetailSheetProps) {
           <span className="lot-sheet__row-label">Área</span>
           <span>{lot.area ? `${lot.area} m²` : '—'}</span>
         </div>
+        <div className="lot-sheet__row">
+          <span className="lot-sheet__row-label">Frente</span>
+          <span>{side(lot.front)}</span>
+        </div>
+        <div className="lot-sheet__row">
+          <span className="lot-sheet__row-label">Fondo</span>
+          <span>{side(lot.back)}</span>
+        </div>
+        <div className="lot-sheet__row">
+          <span className="lot-sheet__row-label">Lateral izquierdo</span>
+          <span>{side(lot.left_side)}</span>
+        </div>
+        <div className="lot-sheet__row">
+          <span className="lot-sheet__row-label">Lateral derecho</span>
+          <span>{side(lot.right_side)}</span>
+        </div>
 
-        {lot.status === 'available' ? (
-          <div className="lot-sheet__row">
-            <span className="lot-sheet__row-label">Precio de referencia</span>
-            <span>{formatCurrency(lot.reference_price)}</span>
-          </div>
-        ) : (
+        {lot.status !== 'available' && (
           <>
             <div className="lot-sheet__row">
               <span className="lot-sheet__row-label">Precio acordado</span>
@@ -108,6 +138,12 @@ export function LotDetailSheet({ lot, onActionSuccess }: LotDetailSheetProps) {
 
       {lot.status === 'reserved' && authStatus === 'admin' && (
         <Button onClick={() => setMode('payment')}>Registrar pago</Button>
+      )}
+
+      {authStatus === 'admin' && (
+        <Button variant="secondary" onClick={() => setMode('edit-dimensions')}>
+          Editar dimensión
+        </Button>
       )}
     </>
   )

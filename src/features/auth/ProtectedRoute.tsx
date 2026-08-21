@@ -6,21 +6,13 @@ import { useAuth } from './useAuth'
 export function RequireAdmin({ children }: { children: ReactNode }) {
   const { status } = useAuth()
   if (status === 'loading') return <FullScreenLoader />
-  if (status !== 'admin') return <Navigate to="/admin/login" replace />
+  if (status !== 'admin') return <Navigate to="/" replace />
   return children
 }
 
 export function RequireSeller({ children }: { children: ReactNode }) {
   const { status } = useAuth()
   if (status === 'loading') return <FullScreenLoader />
-  if (status !== 'seller') return <Navigate to="/vendedor/login" replace />
-  return children
-}
-
-// Para pantallas que ambos roles pueden ver (ej. /terrenos, spec §51/§52).
-export function RequireAnyRole({ children }: { children: ReactNode }) {
-  const { status } = useAuth()
-  if (status === 'loading') return <FullScreenLoader />
-  if (status === 'signed-out') return <Navigate to="/" replace />
+  if (status !== 'seller') return <Navigate to="/" replace />
   return children
 }
