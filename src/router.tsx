@@ -8,6 +8,7 @@ import { SellerHomePage } from './features/sellers/SellerHomePage'
 import { AdminSellersPage } from './features/sellers/pages/AdminSellersPage'
 import { ProjectsListPage } from './features/projects/pages/ProjectsListPage'
 import { ProjectDetailPage } from './features/projects/pages/ProjectDetailPage'
+import { ProjectDashboardPage } from './features/dashboard/pages/ProjectDashboardPage'
 
 // HashRouter (URLs con #) en vez de BrowserRouter: GitHub Pages es hosting
 // estático puro, sin reglas de rewrite del lado del servidor — con rutas
@@ -55,6 +56,14 @@ export const router = createHashRouter([
       <RequireAnyRole>
         <ProjectDetailPage />
       </RequireAnyRole>
+    ),
+  },
+  {
+    path: '/terrenos/:projectId/dashboard',
+    element: (
+      <RequireAdmin>
+        <ProjectDashboardPage />
+      </RequireAdmin>
     ),
   },
 ])

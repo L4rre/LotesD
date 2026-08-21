@@ -3,19 +3,20 @@ import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../../../lib/supabase'
 import { Alert } from '../../../components/ui/Alert'
 import { FullScreenLoader } from '../../../components/ui/FullScreenLoader'
-import { DemoMap } from '../../map/DemoMap'
-import { useLotStatuses } from '../../map/hooks/useLotStatuses'
-import { useAuth } from '../../auth/useAuth'
+import { DashboardView } from '../DashboardView'
+import { useDashboardStats } from '../hooks/useDashboardStats'
 import type { Project } from '../../../types/database.types'
 
-export function ProjectDetailPage() {
-  const { admin } = useAuth()
+// Dashboard por terreno (spec §25, con projectId): mismo useDashboardStats
+// y DashboardView que el dashboard general, solo que filtrado a un solo
+// terreno. Fase 17.
+export function ProjectDashboardPage() {
   const { projectId } = useParams<{ projectId: string }>()
   const [project, setProject] = useState<Project | null>(null)
   const [loadingProject, setLoadingProject] = useState(true)
   const [projectError, setProjectError] = useState<string | null>(null)
 
-  const { lots, loading: loadingLots, error: lotsError, refresh: refreshLots } = useLotStatuses(projectId)
+  const { stats, loading: loadingStats, error: statsError } = useDashboardStats(projectId)
 
   useEffect(() => {
     let cancelled = false
@@ -41,7 +42,7 @@ export function ProjectDetailPage() {
     }
   }, [projectId])
 
-  if (loadingProject || loadingLots) return <FullScreenLoader />
+  if (loadingProject) return <FullScreenLoader />
 
   if (projectError || !project) {
     return (
@@ -55,22 +56,17 @@ export function ProjectDetailPage() {
   }
 
   return (
-    <div className="map-screen">
-      <header className="map-screen__header">
-        <Link to="/terrenos">← Terrenos</Link>
-        <h1 className="map-screen__title">{project.name}</h1>
-        {admin ? <Link to={`/terrenos/${projectId}/dashboard`}>Estadísticas</Link> : <span />}
-      </header>
-
-      {lotsError && <Alert variant="error">{lotsError}</Alert>}
-
-      {lots.length === 0 ? (
-        <div className="screen__card">
-          <Alert variant="info">Este terreno todavía no tiene lotes cargados.</Alert>
-        </div>
-      ) : (
-        <DemoMap lots={lots} onRefresh={refreshLots} />
-      )}
-    </div>
+    <DashboardView
+      header={
+        <header className="map-screen__header">
+          <Link to={`/terrenos/${projectId}`}>← {project.name}</Link>
+          <h1 className="map-screen__title">Estadísticas</h1>
+          <span />
+        </header>
+      }
+      stats={stats}
+      loading={loadingStats}
+      error={statsError}
+    />
   )
 }

@@ -10,19 +10,20 @@ decisiones de diseño en [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 ## Estado actual
 
-**Fase 15** (de 22) — Realtime en el mapa: si un vendedor reserva un lote,
-o el admin le registra un pago, **todos los dispositivos conectados a ese
-terreno ven el color cambiar solo**, sin recargar (mismo patrón que el
-selector de vendedores en vivo de la Fase 4). Las Fases 10-13 dejaron
-reservas y pagos directo desde el mapa (botón "Reservar este lote" para
-el vendedor en lotes disponibles, "Registrar pago" para el admin en
-reservados — cada uno solo ve el suyo, spec §41/§42), las Fases 8-9 el
-mapa (carretera en cruz, 4 manzanas, brújula, pan/zoom, Bottom Sheet), y
-las Fases 6-7 el "Proyecto Demo" con sus 48 lotes. Ver
-[`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) §0.7-§0.8 por dos
-correcciones encontradas en fases anteriores (Realtime filtrando el hash
-de la contraseña; pgcrypto en el esquema `extensions` de Supabase). Falta:
-dashboards (Fases 16-18), auditoría (Fase 19) y el resto.
+**Fase 16-18** (de 22) — Dashboards: el admin tiene un **dashboard
+general** (`/admin`, agrega todos los terrenos y vendedores) y un
+**dashboard por terreno** (`/terrenos/:id/dashboard`, enlace
+"Estadísticas" desde el mapa), ambos con conteos por estado (disponible/
+reservado/pagado), valor reservado/cobrado/saldo, una tabla por vendedor
+(reservas, iniciales, clientes, valor) y listas de reservas/pagos
+recientes — comparten un mismo hook y componente (spec §25, ver
+`docs/ARCHITECTURE.md` §12). Cada vendedor tiene su propia sección **"Mi
+actividad"** (`/vendedor`) con solo sus propias reservas y clientes, nunca
+los de otro vendedor (spec §49/§51). Las Fases 10-15 dejaron reservas,
+pagos y Realtime en el mapa; ver `docs/ARCHITECTURE.md` §0.7-§0.8 por dos
+correcciones de fases anteriores (Realtime filtrando el hash de la
+contraseña; pgcrypto en el esquema `extensions` de Supabase). Falta:
+auditoría (Fase 19) y el resto.
 
 **Para probar el login real** necesitas un proyecto Supabase con las
 migraciones aplicadas — ver la sección [Base de datos](#base-de-datos-supabase)

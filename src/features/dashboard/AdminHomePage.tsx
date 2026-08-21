@@ -1,32 +1,43 @@
 import { Link } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { useAuth } from '../auth/useAuth'
+import { DashboardView } from './DashboardView'
+import { useDashboardStats } from './hooks/useDashboardStats'
 
-// Marcador de posición: el dashboard real llega en la Fase 16.
+// Dashboard general (spec §25, sin projectId): agrega los terrenos y
+// resume la actividad de los vendedores. Fase 16.
 export function AdminHomePage() {
   const { admin, signOutAdmin } = useAuth()
+  const { stats, loading, error } = useDashboardStats()
 
   return (
-    <main className="screen">
-      <div className="screen__card">
-        <h1 className="screen__title">Hola, {admin?.displayName}</h1>
-        <p className="screen__subtitle">
-          Sesión de administrador activa. El dashboard llega en la Fase 16.
-        </p>
-        <Link to="/terrenos">
-          <Button variant="secondary" type="button">
-            Terrenos
+    <DashboardView
+      header={
+        <header className="map-screen__header">
+          <span />
+          <h1 className="map-screen__title">Hola, {admin?.displayName}</h1>
+          <Button variant="secondary" onClick={() => signOutAdmin()}>
+            Salir
           </Button>
-        </Link>
-        <Link to="/admin/vendedores">
-          <Button variant="secondary" type="button">
-            Vendedores
-          </Button>
-        </Link>
-        <Button variant="secondary" onClick={() => signOutAdmin()}>
-          Cerrar sesión
-        </Button>
-      </div>
-    </main>
+        </header>
+      }
+      beforeStats={
+        <div className="dashboard-quicklinks">
+          <Link to="/terrenos">
+            <Button variant="secondary" type="button">
+              Terrenos
+            </Button>
+          </Link>
+          <Link to="/admin/vendedores">
+            <Button variant="secondary" type="button">
+              Vendedores
+            </Button>
+          </Link>
+        </div>
+      }
+      stats={stats}
+      loading={loading}
+      error={error}
+    />
   )
 }

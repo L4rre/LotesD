@@ -551,3 +551,35 @@ sola, aunque la pestaña siga abierta y el heartbeat siga "vivo".
   `.env.example`.
 - GitHub Pages es hosting estático puro — no hay servidor propio que
   proteger, todo el perímetro de seguridad vive en Supabase.
+
+## 12. Estrategia de dashboards (Fase 16-18)
+
+- El dashboard general y el dashboard por terreno comparten un único hook
+  (`useDashboardStats(projectId?)`) y un único componente presentacional
+  (`DashboardView`), spec §25: la única diferencia entre ambos es si las
+  queries llevan `.eq('project_id', projectId)` o no, y si se cuenta
+  `projects` (solo tiene sentido en el general). Evita mantener dos
+  pantallas casi idénticas.
+- Cuatro queries en paralelo por cada refresco: `lot_status_view` (conteos
+  por estado, sumas de valor/cobrado/saldo, y agregación por vendedor hecha
+  en JS agrupando por `seller_number` — la vista ya trae precio pactado,
+  total pagado y cliente por lote reservado, así que no hace falta una
+  query aparte para eso), `payments` filtrado a `payment_type='initial'`
+  con `reservations(seller_number)` embebido (para "iniciales por
+  vendedor"), y dos queries de "recientes" (`reservations`/`payments` con
+  `lots`/`clients`/`sellers` embebidos vía PostgREST, límite 8, orden
+  `created_at desc`).
+- **"Mi actividad" del vendedor (spec §49/§51) es deliberadamente un hook
+  aparte** (`useSellerActivity`), no una llamada a `useDashboardStats` con
+  el `perSeller` filtrado en el cliente: el dashboard de admin agrega a
+  *todos* los vendedores en una sola respuesta (correcto para admin, spec
+  §41), así que reusarlo y filtrar en React dejaría pasar por la red los
+  números de los otros 9 vendedores hasta el navegador de cada vendedor,
+  aunque la UI nunca los pinte. `useSellerActivity(sellerNumber)` filtra
+  `seller_number = <el propio>` directamente en cada query — ningún dato de
+  otro vendedor sale de Supabase.
+- Sin Realtime en esta fase: a diferencia del mapa (§9), un dashboard es
+  una foto que el admin abre puntualmente para revisar números, no una
+  pantalla que se deja abierta esperando cambios en vivo; se recalcula al
+  entrar a la pantalla. Si en el futuro se necesita, el mismo patrón de
+  suscripción de `useLotStatuses` aplica igual.
