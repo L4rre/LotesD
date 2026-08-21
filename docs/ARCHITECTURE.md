@@ -476,12 +476,13 @@ solo cambia el parámetro.
   SVG; a 1,600 lotes no hace falta virtualización si el SVG se mantiene
   simple (paths agregados por manzana, no por lote individual con física
   propia). Buscador y "centrar lote" quedan para cuando existan (spec §36).
-- El mapa se carga con un fetch puntual de `lot_status_view` (sin
-  Realtime todavía) — se actualiza al recargar o al volver a entrar. La
-  suscripción en vivo a `reservations`/`payments` para que el color
-  cambie sin recargar es explícitamente la Fase 15, junto con el resto de
-  las pantallas que la necesitan (mismo patrón ya probado en el selector
-  de vendedores de la Fase 4).
+- `useLotStatuses` trae `lot_status_view` por terreno y se suscribe a
+  `reservations`/`payments` filtrado por `project_id` (Fase 15, mismo
+  patrón que el selector de vendedores de la Fase 4): cualquier cambio en
+  cualquiera de las dos dispara un refetch completo del terreno. A
+  48-200 lotes por terreno, ese refetch simple es más barato de mantener
+  correcto que actualizar una sola fila a mano, y sigue siendo una sola
+  consulta indexada por `project_id`.
 
 ## 9. Estrategia de Realtime
 

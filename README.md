@@ -10,21 +10,19 @@ decisiones de diseño en [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 ## Estado actual
 
-**Fases 10-13** (de 22) — reservas y pagos, directo desde el mapa: al
-tocar un lote disponible, el vendedor ve "Reservar este lote" (cliente,
-teléfono/DNI opcional, precio acordado, inicial); al tocar uno reservado,
-el administrador ve "Registrar pago" (monto + fecha). Cada botón solo
-aparece para el rol correspondiente (spec §41/§42) — el vendedor no
-registra pagos posteriores, el admin no crea reservas directamente. Sin
-Realtime todavía (Fase 15): el color se actualiza al refrescar tras la
-acción, no en otros dispositivos conectados. Las Fases 8-9 dejaron el mapa
-(carretera en cruz, 4 manzanas, brújula, pan/zoom, Bottom Sheet) y las
-Fases 6-7 el "Proyecto Demo" con sus 48 lotes. Ver
+**Fase 15** (de 22) — Realtime en el mapa: si un vendedor reserva un lote,
+o el admin le registra un pago, **todos los dispositivos conectados a ese
+terreno ven el color cambiar solo**, sin recargar (mismo patrón que el
+selector de vendedores en vivo de la Fase 4). Las Fases 10-13 dejaron
+reservas y pagos directo desde el mapa (botón "Reservar este lote" para
+el vendedor en lotes disponibles, "Registrar pago" para el admin en
+reservados — cada uno solo ve el suyo, spec §41/§42), las Fases 8-9 el
+mapa (carretera en cruz, 4 manzanas, brújula, pan/zoom, Bottom Sheet), y
+las Fases 6-7 el "Proyecto Demo" con sus 48 lotes. Ver
 [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) §0.7-§0.8 por dos
 correcciones encontradas en fases anteriores (Realtime filtrando el hash
 de la contraseña; pgcrypto en el esquema `extensions` de Supabase). Falta:
-Realtime en el mapa (Fase 15), dashboards (Fases 16-18), auditoría (Fase
-19) y el resto.
+dashboards (Fases 16-18), auditoría (Fase 19) y el resto.
 
 **Para probar el login real** necesitas un proyecto Supabase con las
 migraciones aplicadas — ver la sección [Base de datos](#base-de-datos-supabase)
