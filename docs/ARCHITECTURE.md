@@ -99,6 +99,20 @@ una razón técnica mejor". Estos son los puntos donde eso aplica, y por qué:
    solo con el hash y ya no necesita estar en Realtime ni tener política
    de SELECT alguna.
 
+8. **`pgcrypto` vive en el esquema `extensions` en Supabase, no en
+   `public` (encontrado al probar contra un proyecto Supabase real).**
+   `seller_login` y `admin_set_global_password` fijaban `search_path =
+   public` a secas, asumiendo que `create extension pgcrypto` deja
+   `crypt()`/`gen_salt()` en `public` — cierto en un Postgres genérico
+   (así se validó en la Fase 2), pero Supabase instala varias extensiones,
+   pgcrypto incluida, en un esquema propio llamado `extensions`. El
+   síntoma en producción fue el login de vendedor fallando con "Ocurrió un
+   error inesperado", y en los logs de Supabase: `function crypt(text,
+   text) does not exist`. Solución: agregar `extensions` al `search_path`
+   de ambas funciones (`set search_path = public, extensions`). Es
+   inofensivo en un Postgres genérico donde ese esquema no existe (un
+   esquema ausente en `search_path` simplemente se ignora).
+
 Ninguno de estos puntos es una contradicción bloqueante — son huecos de
 diseño que la spec deja abiertos y que hay que resolver antes de escribir
 SQL. Sigo con el resto del análisis asumiendo estas decisiones; si alguna no
