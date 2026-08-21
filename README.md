@@ -10,18 +10,18 @@ decisiones de diseño en [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 ## Estado actual
 
-**Fases 6-7** (de 22) — "Proyecto Demo" sembrado con sus 48 lotes (4
-manzanas Y/Z/K/L de 12 cada una), todos disponibles por ahora. La Fase 5
-ya dejó `/terrenos` (lista de terrenos con su cantidad de lotes, accesible
-a admin y vendedor) y `/terrenos/:id` (placeholder — el mapa llega en la
-Fase 8). La Fase 4 dejó el sistema de vendedores completo: selector en
-vivo por Realtime y panel de administrador en `/admin/vendedores`
-(bloqueo global con confirmación, cambio de contraseña global). Ver
-[`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) §0.7 por una corrección de
-seguridad encontrada en el camino de la Fase 4 (se separó
-`seller_access_state` de `system_settings` para que Realtime no pudiera
-filtrar el hash de la contraseña), y §0.8 por la de la Fase 4 sobre
-pgcrypto en Supabase. Falta: el mapa (Fase 8-9) y todo lo demás.
+**Fases 8-9** (de 22) — mapa conceptual del terreno: carretera principal
+en cruz, 4 manzanas (Y/Z/K/L) de 12 lotes coloreados según su estado
+(🟢/🟡/🔴), brújula fija, pan/zoom táctil, y un Bottom Sheet al tocar un
+lote con su detalle (spec §13). `/terrenos/:id` ya muestra el mapa real
+del "Proyecto Demo" (Fases 6-7, 48 lotes sembrados). La Fase 5 dejó
+`/terrenos` (lista de terrenos, accesible a admin y vendedor) y la Fase 4
+el sistema de vendedores completo (selector en vivo, panel de admin en
+`/admin/vendedores`). Ver [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
+§0.7-§0.8 por dos correcciones encontradas en el camino (Realtime
+filtrando el hash de la contraseña; pgcrypto en el esquema `extensions`
+de Supabase). Falta: reservas/pagos (Fases 10-14), Realtime en el mapa
+(Fase 15) y todo lo demás.
 
 **Para probar el login real** necesitas un proyecto Supabase con las
 migraciones aplicadas — ver la sección [Base de datos](#base-de-datos-supabase)

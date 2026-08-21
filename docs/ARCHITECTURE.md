@@ -455,21 +455,33 @@ solo cambia el parámetro.
 ## 8. Estrategia del mapa
 
 - El mapa es un SVG conceptual (carretera en cruz, 4 manzanas, brújula fija
-  a la pantalla) guardado como componente estático por proyecto en
-  `src/features/map/svgs/`, con cada lote como un elemento con
-  `id="lot-{lot_code}"` — esto es exactamente `lots.geometry_id`.
+  a la pantalla) armado en `src/features/map/` (`DemoMap.tsx` +
+  `components/BlockGrid.tsx`, que genera las 12 celdas de una manzana por
+  código en vez de tener 48 `<rect>` escritos a mano), con cada lote como
+  un elemento con `id="lot-{lot_code}"` — esto es exactamente
+  `lots.geometry_id`. Es específico del "Proyecto Demo" (4 manzanas de 12);
+  un terreno con otra distribución tendría su propio componente de mapa
+  hasta que exista un importador genérico (ver más abajo).
 - La geometría (SVG) y el dato comercial (estado, precio, cliente) están
-  completamente separados (spec §43): React toma `lot_status_view`, arma un
-  mapa `geometry_id → status`, y solo pinta/pone `onClick` sobre los
-  elementos del SVG. Ningún dato comercial vive dentro del SVG.
+  completamente separados (spec §43): `useLotStatuses` trae
+  `lot_status_view` por `project_id`, y `DemoMap` solo pinta/pone
+  `onClick` sobre los elementos del SVG según ese estado. Ningún dato
+  comercial vive dentro del SVG.
 - Preparado para planos reales (spec §44): cuando la propietaria entregue
   planos digitales, basta con generar un SVG nuevo que reutilice los mismos
   `geometry_id` (o remapear `lots.geometry_id`) — no se toca el resto de la
   app. No se construye todavía ningún importador automático de DWG/DXF.
-- Zoom/pan/selección/centrar-lote (spec §45) se añaden en la Fase 8/9 con
-  una librería ligera de pan-zoom sobre el mismo SVG; a 1,600 lotes no hace
-  falta virtualización si el SVG se mantiene simple (paths agregados por
-  manzana, no por lote individual con física propia).
+- Zoom/pan (spec §45) usa `react-zoom-pan-pinch` (gestos táctiles de pinch
+  y drag ya resueltos, en vez de reimplementarlos a mano) sobre el mismo
+  SVG; a 1,600 lotes no hace falta virtualización si el SVG se mantiene
+  simple (paths agregados por manzana, no por lote individual con física
+  propia). Buscador y "centrar lote" quedan para cuando existan (spec §36).
+- El mapa se carga con un fetch puntual de `lot_status_view` (sin
+  Realtime todavía) — se actualiza al recargar o al volver a entrar. La
+  suscripción en vivo a `reservations`/`payments` para que el color
+  cambie sin recargar es explícitamente la Fase 15, junto con el resto de
+  las pantallas que la necesitan (mismo patrón ya probado en el selector
+  de vendedores de la Fase 4).
 
 ## 9. Estrategia de Realtime
 

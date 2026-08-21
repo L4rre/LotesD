@@ -249,6 +249,146 @@ body {
   align-items: center;
 }
 
+.bottom-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 26, 22, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 50;
+}
+
+.bottom-sheet {
+  position: relative;
+  width: 100%;
+  max-width: 32rem;
+  max-height: 80dvh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 1.25rem 1.25rem 0 0;
+  padding: 1.5rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bottom-sheet__handle {
+  position: absolute;
+  top: 0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2.5rem;
+  height: 0.3rem;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.bottom-sheet__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  border: none;
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.lot-sheet__title {
+  margin: 0.5rem 0 0;
+  font-size: 1.3rem;
+}
+
+.lot-sheet__status {
+  font-weight: 600;
+}
+
+.lot-sheet__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.lot-sheet__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+
+.lot-sheet__row:last-child {
+  border-bottom: none;
+}
+
+.lot-sheet__row-label {
+  color: var(--text-muted);
+}
+
+.map-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.map-screen__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 10;
+}
+
+.map-screen__title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.map-canvas-wrap {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.map-compass {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 4.5rem;
+  height: 4.5rem;
+  z-index: 5;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.15));
+}
+
+.map-legend {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+}
+
 .home-card {
   width: 100%;
   max-width: 24rem;
