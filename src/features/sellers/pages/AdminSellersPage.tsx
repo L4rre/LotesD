@@ -19,7 +19,12 @@ function timeSince(iso: string): string {
 }
 
 export function AdminSellersPage() {
-  const { enabled: accessEnabled, error: accessError, refresh: refreshAccess } = useSellerAccessEnabled()
+  const {
+    enabled: accessEnabled,
+    error: accessError,
+    loading: loadingAccess,
+    refresh: refreshAccess,
+  } = useSellerAccessEnabled()
   const { availability, loading: loadingAvailability, error: availabilityError } = useSellerAvailability()
 
   const [toggling, setToggling] = useState(false)
@@ -75,7 +80,7 @@ export function AdminSellersPage() {
     }
   }
 
-  if (accessEnabled === null || loadingAvailability) return <FullScreenLoader />
+  if (loadingAccess || loadingAvailability) return <FullScreenLoader />
 
   return (
     <main className="screen">

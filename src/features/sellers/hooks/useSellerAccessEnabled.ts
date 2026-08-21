@@ -10,6 +10,7 @@ import { supabase } from '../../../lib/supabase'
 export function useSellerAccessEnabled() {
   const [enabled, setEnabled] = useState<boolean | null>(null)
   const [error, setError] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
     const { data, error } = await supabase
@@ -17,11 +18,18 @@ export function useSellerAccessEnabled() {
       .select('enabled')
       .maybeSingle()
     if (error) {
+      // Antes esto dejaba `enabled` en null para siempre y la pantalla de
+      // login quedaba cargando de forma infinita, porque el llamador solo
+      // miraba `enabled === null` para saber si ya terminó de cargar, sin
+      // enterarse de que hubo un error. `loading` distingue "todavía no
+      // llega" de "llegó y falló".
       setError(true)
+      setLoading(false)
       return
     }
     setError(false)
     setEnabled(data?.enabled ?? true)
+    setLoading(false)
   }, [])
 
   useEffect(() => {
@@ -44,5 +52,5 @@ export function useSellerAccessEnabled() {
     }
   }, [refresh])
 
-  return { enabled, error, refresh }
+  return { enabled, error, loading, refresh }
 }

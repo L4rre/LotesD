@@ -33,7 +33,12 @@ export function SellerLoginPage() {
     }
   }, [status, ensureAnonymousSession])
 
-  const { enabled: accessEnabled, error: accessError } = useSellerAccessEnabled()
+  const {
+    enabled: accessEnabled,
+    error: accessError,
+    loading: loadingAccess,
+    refresh: refreshAccess,
+  } = useSellerAccessEnabled()
   const {
     availability,
     loading: loadingAvailability,
@@ -94,7 +99,7 @@ export function SellerLoginPage() {
     )
   }
 
-  const stillLoading = !authReady || accessEnabled === null || loadingAvailability
+  const stillLoading = !authReady || loadingAccess || loadingAvailability
   if (stillLoading) return <FullScreenLoader label="Cargando…" />
 
   if (accessError || availabilityError) {
@@ -105,7 +110,13 @@ export function SellerLoginPage() {
           <Alert variant="error">
             No se pudo conectar. Revisa tu conexión e intenta de nuevo.
           </Alert>
-          <Button variant="secondary" onClick={refreshAvailability}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              refreshAccess()
+              refreshAvailability()
+            }}
+          >
             Reintentar
           </Button>
         </div>
