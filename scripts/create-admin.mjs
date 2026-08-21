@@ -6,19 +6,23 @@
 // Uso:
 //   SUPABASE_URL=https://tu-proyecto.supabase.co \
 //   SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key \
-//   ADMIN_PASSWORD=admin \
+//   ADMIN_PASSWORD=admin123 \
 //   node scripts/create-admin.mjs
 //
 // El "usuario" que el administrador escribe en el login (por defecto
 // "admin") se traduce internamente a un correo sintético fijo
 // (ADMIN_EMAIL) que nunca se muestra en la interfaz.
+//
+// Supabase Auth exige contraseñas de al menos 6 caracteres -- "admin"
+// (5) no alcanza y el script falla con "Password should be at least 6
+// characters." Usa algo como "admin123" y cámbialo luego.
 
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.SUPABASE_URL
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@lotesd.internal'
-const adminPassword = process.env.ADMIN_PASSWORD ?? 'admin'
+const adminPassword = process.env.ADMIN_PASSWORD ?? 'admin123'
 
 if (!supabaseUrl || !serviceRoleKey) {
   console.error(
@@ -61,8 +65,8 @@ async function main() {
   if (profileError) throw profileError
 
   console.log('Listo. En el login, el administrador debe usar "admin" como usuario.')
-  if (adminPassword === 'admin') {
-    console.warn('ADVERTENCIA: contraseña por defecto "admin". Cámbiala antes de usar en producción.')
+  if (adminPassword === 'admin123') {
+    console.warn('ADVERTENCIA: contraseña por defecto "admin123". Cámbiala antes de usar en producción.')
   }
 }
 

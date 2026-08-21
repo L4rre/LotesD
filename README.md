@@ -104,12 +104,13 @@ mutación sensible (ver `docs/ARCHITECTURE.md` §0, §11).
    ```bash
    SUPABASE_URL=https://tu-proyecto.supabase.co \
    SUPABASE_SERVICE_ROLE_KEY=tu-service-role-key \
-   ADMIN_PASSWORD=admin \
+   ADMIN_PASSWORD=admin123 \
    node scripts/create-admin.mjs
    ```
    La `service_role key` solo se usa acá, en tu terminal, una sola vez —
-   nunca en el frontend ni commiteada. Cambia `ADMIN_PASSWORD` antes de
-   usar la app con datos reales.
+   nunca en el frontend ni commiteada. Supabase Auth exige contraseñas de
+   al menos 6 caracteres (por eso `admin123`, no `admin`). Cambia
+   `ADMIN_PASSWORD` antes de usar la app con datos reales.
 
 **Probar el esquema localmente (sin necesidad de un proyecto Supabase):**
 requiere PostgreSQL instalado. `scripts/test/00_auth_stub.sql` simula lo

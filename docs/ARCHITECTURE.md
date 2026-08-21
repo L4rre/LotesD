@@ -329,16 +329,17 @@ solo cambia el parámetro.
 ## 4. Flujo de autenticación
 
 - **Administrador:** cuenta **interna**, no un correo real — el admin ve un
-  login con usuario/contraseña (`admin` / `admin` en la demo). Por dentro
-  sigue siendo Supabase Auth (así se obtiene un `auth.uid()` real y RLS
-  funciona igual que para cualquier tabla): el frontend mapea el usuario
-  `admin` a un correo sintético fijo (`admin@lotesd.internal`) y llama
-  `supabase.auth.signInWithPassword({ email: 'admin@lotesd.internal',
-  password })` — el usuario nunca ve ese correo. `profiles.role = 'admin'`.
-  La contraseña `admin` es el valor semilla de la demo; el admin la cambia
-  luego con el flujo normal de cambio de contraseña de Supabase Auth (no
-  tiene relación con la contraseña global de vendedores del §17, son dos
-  cosas distintas).
+  login con usuario/contraseña (`admin` / `admin123` en la demo — Supabase
+  Auth exige contraseñas de al menos 6 caracteres, "admin" por sí solo no
+  alcanza). Por dentro sigue siendo Supabase Auth (así se obtiene un
+  `auth.uid()` real y RLS funciona igual que para cualquier tabla): el
+  frontend mapea el usuario `admin` a un correo sintético fijo
+  (`admin@lotesd.internal`) y llama `supabase.auth.signInWithPassword({
+  email: 'admin@lotesd.internal', password })` — el usuario nunca ve ese
+  correo. `profiles.role = 'admin'`. La contraseña `admin123` es el valor
+  semilla de la demo; el admin la cambia luego con el flujo normal de
+  cambio de contraseña de Supabase Auth (no tiene relación con la
+  contraseña global de vendedores del §17, son dos cosas distintas).
   - **Importante:** esta cuenta no puede crearse con una migración SQL
     normal contra un proyecto Supabase hosteado (el service_role key nunca
     debe usarse desde el frontend, y por eso tampoco se commitea un script
