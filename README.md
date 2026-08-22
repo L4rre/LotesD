@@ -10,18 +10,21 @@ decisiones de diseño en [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
 ## Estado actual
 
-**Fase 16-18** (de 22), más dos rondas de ajustes pedidos tras probar todo
-en vivo. La más reciente: **el terreno real reemplazó al Proyecto Demo**
-— 5 manzanas (X-10, Y-10, Y-11, Z-10, Z-11), 78 lotes, con área y
-perímetro transcritos de la tabla maestra del propietario (ver
-`docs/ARCHITECTURE.md` §14). Cada lote muestra área/perímetro y una
-imagen individual con sus cotas en vez de los lados como texto — para que
-la imagen de un lote aparezca automáticamente, solo hay que dejarla en
+**Fase 16-18** (de 22), más varias rondas de ajustes pedidos tras probar
+todo en vivo. La más reciente: **el mapa dibuja la geometría real del
+plano vectorial** (posición, forma y rotación de cada lote/manzana,
+extraídas del CAD) en vez de una grilla aproximada — la brújula rota
+junto con el mapa para seguir señalando el norte real. Antes de eso: **el
+terreno real reemplazó al Proyecto Demo** — 5 manzanas (X-10, Y-10, Y-11,
+Z-10, Z-11), 78 lotes, con área y perímetro transcritos de la tabla
+maestra del propietario (ver `docs/ARCHITECTURE.md` §8, §14). Cada lote
+muestra área/perímetro y una imagen individual con sus cotas en vez de
+los lados como texto — para que la imagen de un lote aparezca
+automáticamente, solo hay que dejarla en
 `public/lot-details/<manzana-sin-guion>-<lote>.png` (ej.
 `public/lot-details/X10-05.png`); si todavía no existe, la ficha avisa
-"Imagen de dimensiones no disponible" sin romperse. El mapa (calles,
-parque, las 5 manzanas) se genera desde datos, no es un dibujo fijo —
-agregar otro terreno más adelante es un archivo de layout nuevo en
+"Imagen de dimensiones no disponible" sin romperse. Agregar otro terreno
+más adelante es un archivo de layout nuevo en
 `src/features/map/terrainData/`, no un componente nuevo.
 
 Antes de eso: **la página de inicio (`/`) es pública** — cualquier

@@ -474,35 +474,33 @@ solo cambia el parámetro.
 
 ## 8. Estrategia del mapa
 
-- El mapa es un SVG conceptual (calles, parque, brújula fija a la
-  pantalla) generado en React a partir de datos, no un archivo `.svg`
-  estático: `src/features/map/TerrainMap.tsx` (antes `DemoMap.tsx`) recibe
-  un `layout` (posiciones de manzanas/calles/parque, ver
-  `terrainData/buenaFortuna.ts`) y una lista de lotes (`lot_status_view`),
-  y `components/BlockGrid.tsx` ubica cada lote de una manzana en una
-  grilla de 2 columnas **en el orden en que aparece en los datos**, no
-  asumiendo numeración correlativa -- varias manzanas reales tienen
-  huecos (Y-11 salta del 08 al 22 con números sueltos, Z-10/Z-11 solo
-  tienen 01-04 y 18-25). Cada lote es un elemento con
-  `id="lot-{lot_code}"` (`lots.geometry_id`).
-- Es una **aproximación topológica**, no un trazado exacto del plano real
-  (no hay archivo vectorial/DXF disponible): respeta la agrupación y el
-  orden relativo de las manzanas, pero cada lote se dibuja como una celda
-  rectangular, no con su forma real.
+- El mapa es un SVG generado en React a partir de datos, no un archivo
+  `.svg` estático: `src/features/map/TerrainMap.tsx` (antes `DemoMap.tsx`)
+  recibe un `layout` con **geometría real extraída del plano vectorial**
+  (posición x/y de cada lote dentro de su manzana, centro/rotación de
+  cada manzana, polígono del parque -- ver `terrainData/buenaFortuna.ts`)
+  y una lista de lotes (`lot_status_view`); frente/fondo de cada lote se
+  derivan de área+perímetro con `resolverDimensiones()`
+  (`domain/lotGeometry.ts`), nunca se guardan aparte. Cada lote es un
+  elemento con `id="lot-{lot_code}"` (`lots.geometry_id`).
+- El layout ya no es una aproximación: reemplaza a la grilla de 2
+  columnas de la fase anterior (`components/BlockGrid.tsx`, borrado) con
+  coordenadas reales del CAD, incluyendo formas irregulares (ej. MZ X-10
+  se abre en abanico hacia el parque) y un ángulo de rotación real
+  (`rotationDeg`) respecto al norte -- por eso `Compass.tsx` ahora acepta
+  ese mismo ángulo como prop y rota su aguja junto con el mapa, para
+  seguir señalando el norte real en vez de "arriba de la pantalla".
 - La geometría (SVG) y el dato comercial (estado, precio, cliente) están
   completamente separados (spec §43): `useLotStatuses` trae
-  `lot_status_view` por `project_id`, y `TerrainMap`/`BlockGrid` solo
-  pintan/ponen `onClick` sobre las celdas según ese estado. Ningún dato
-  comercial vive en el layout.
+  `lot_status_view` por `project_id`, y `TerrainMap` solo pinta/pone
+  `onClick` sobre las celdas según ese estado. Ningún dato comercial vive
+  en el layout, y el layout tampoco repite área/perímetro (ya están en
+  `lots` de Supabase, docs §15).
 - **Terrenos futuros (docs §16):** un terreno nuevo es un archivo más en
   `terrainData/` (su propio `layout`) más un lookup por `project.id` en
   `ProjectDetailPage`/`HomePage` (hoy hardcodeado a
   `BUENA_FORTUNA_LAYOUT` porque solo existe un terreno) -- no un
-  componente de mapa nuevo ni cambios en `TerrainMap`/`BlockGrid`.
-- Preparado para planos reales (spec §44): cuando la propietaria entregue
-  planos digitales, basta con generar un SVG nuevo que reutilice los mismos
-  `geometry_id` (o remapear `lots.geometry_id`) — no se toca el resto de la
-  app. No se construye todavía ningún importador automático de DWG/DXF.
+  componente de mapa nuevo ni cambios en `TerrainMap`.
 - Zoom/pan (spec §45) usa `react-zoom-pan-pinch` (gestos táctiles de pinch
   y drag ya resueltos, en vez de reimplementarlos a mano) sobre el mismo
   SVG; a 1,600 lotes no hace falta virtualización si el SVG se mantiene
@@ -691,3 +689,10 @@ sola, aunque la pestaña siga abierta y el heartbeat siga "vivo".
   numeradas por orden de dibujo del CAD, no por número de lote) --
   inconsistente con el resto del archivo y con el patrón que el propio
   pedido describe.
+- **Geometría real (actualización posterior):** el layout topológico
+  aproximado (grilla de 2 columnas) se reemplazó por coordenadas reales
+  extraídas del plano vectorial (posición de cada lote, rotación,
+  polígono del parque) aportadas ya resueltas contra la tabla maestra --
+  ver §8. `lot.area`/`lot.perimeter` de Supabase siguen siendo la única
+  fuente para el tamaño dibujado (vía `resolverDimensiones`); el archivo
+  de geometría no repite esos valores, solo posición/forma.
