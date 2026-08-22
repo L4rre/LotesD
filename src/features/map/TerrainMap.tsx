@@ -4,7 +4,7 @@ import { BottomSheet } from '../../components/ui/BottomSheet'
 import { Compass } from './components/Compass'
 import { LotDetailSheet } from './components/LotDetailSheet'
 import { LOT_STATUS_META } from '../../domain/lotStatus'
-import { resolverDimensiones } from '../../domain/lotGeometry'
+import { resolverDimensiones, detectarLotesQueDoblanEsquina } from '../../domain/lotGeometry'
 import type { LotStatusRow } from '../../types/database.types'
 
 export interface TerrainLayout {
@@ -58,6 +58,16 @@ export function TerrainMap({ layout, lots, onRefresh }: TerrainMapProps) {
     }
     return map
   }, [lots])
+
+  // Por manzana, qué lotes doblan la esquina hacia otra calle (ver docs
+  // §14) -- se calcula una sola vez por `layout`, no en cada render.
+  const esquinasPorManzana = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    for (const block of Object.keys(layout.manzanas)) {
+      map.set(block, detectarLotesQueDoblanEsquina(layout.lotPositions[block] ?? {}))
+    }
+    return map
+  }, [layout])
 
   const bounds = useMemo(() => {
     let minX = Infinity
@@ -160,6 +170,10 @@ export function TerrainMap({ layout, lots, onRefresh }: TerrainMapProps) {
                     if (!pos || lot.area == null || lot.perimeter == null) return null
                     const { frente, fondo, irregular } = resolverDimensiones(lot.area, lot.perimeter)
                     const statusMeta = LOT_STATUS_META[lot.status]
+                    const loteKey = String(lot.lot_number).padStart(2, '0')
+                    const dobla = esquinasPorManzana.get(block)?.has(loteKey) ?? false
+                    const rectW = dobla ? fondo : frente
+                    const rectH = dobla ? frente : fondo
 
                     return (
                       <g
@@ -169,10 +183,10 @@ export function TerrainMap({ layout, lots, onRefresh }: TerrainMapProps) {
                         style={{ cursor: 'pointer' }}
                       >
                         <rect
-                          x={pos.x - frente / 2}
-                          y={pos.y - fondo / 2}
-                          width={frente}
-                          height={fondo}
+                          x={pos.x - rectW / 2}
+                          y={pos.y - rectH / 2}
+                          width={rectW}
+                          height={rectH}
                           fill={statusMeta.fill}
                           stroke={irregular ? '#8a938c' : statusMeta.stroke}
                           strokeWidth={irregular ? 0.3 : 0.22}
@@ -187,9 +201,9 @@ export function TerrainMap({ layout, lots, onRefresh }: TerrainMapProps) {
                             fontWeight={700}
                             fill="#20261f"
                             style={{ pointerEvents: 'none' }}
-                            transform={`rotate(90 ${pos.x} ${pos.y})`}
+                            transform={dobla ? undefined : `rotate(90 ${pos.x} ${pos.y})`}
                           >
-                            {String(lot.lot_number).padStart(2, '0')}
+                            {loteKey}
                           </text>
                         )}
                       </g>

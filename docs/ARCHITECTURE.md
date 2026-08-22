@@ -696,3 +696,16 @@ sola, aunque la pestaña siga abierta y el heartbeat siga "vivo".
   ver §8. `lot.area`/`lot.perimeter` de Supabase siguen siendo la única
   fuente para el tamaño dibujado (vía `resolverDimensiones`); el archivo
   de geometría no repite esos valores, solo posición/forma.
+- **Lotes que doblan la esquina:** los datos solo traen la posición
+  (centro) de cada lote, no su rotación individual. Varias manzanas no
+  son una sola fila recta: tienen una fila principal y uno o dos remates
+  en las puntas que miran hacia otra calle (más notorio en MZ Y-11).
+  Dibujarlos todos con la orientación de la fila principal los dejaba
+  visualmente descolocados/flotando. `detectarLotesQueDoblanEsquina()`
+  (`domain/lotGeometry.ts`) es una heurística: para cada lote mira a su
+  vecino más cercano dentro de la misma manzana, y si la distancia es más
+  vertical que horizontal, intercambia frente/fondo al dibujarlo. Mejora
+  bastante el resultado visual, pero sigue siendo una aproximación (no
+  una rotación real por lote) -- una solución exacta requeriría que el
+  plano vectorial trajera también el ángulo de cada lote, no solo su
+  centro.
